@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Resume_ATS.iml" filepath="$PROJECT_DIR$/.idea/Resume_ATS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/AI_Resume_Checker.iml" filepath="$PROJECT_DIR$/.idea/AI_Resume_Checker.iml" />
     </modules>
   </component>
 </project>
