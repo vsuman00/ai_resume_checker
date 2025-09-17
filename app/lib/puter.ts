@@ -96,8 +96,10 @@ interface PuterStore {
     clearError: () => void;
 }
 
-const getPuter = (): typeof window.puter | null =>
-    typeof window !== "undefined" && window.puter ? window.puter : null;
+const getPuter = (): typeof window.puter | null => {
+    if (typeof window === "undefined") return null;
+    return window.puter || null;
+};
 
 export const usePuterStore = create<PuterStore>((set, get) => {
     const setError = (msg: string) => {
@@ -242,6 +244,11 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     };
 
     const init = (): void => {
+        // Only run on client side
+        if (typeof window === "undefined") {
+            return;
+        }
+
         const puter = getPuter();
         if (puter) {
             set({ puterReady: true });
@@ -350,7 +357,7 @@ export const usePuterStore = create<PuterStore>((set, get) => {
                     ],
                 },
             ],
-            { model: "claude-sonnet-4" }
+            { model: "claude-3-7-sonnet" }
         ) as Promise<AIResponse | undefined>;
     };
 
@@ -412,7 +419,7 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     };
 
     return {
-        isLoading: true,
+        isLoading: false,
         error: null,
         puterReady: false,
         auth: {
