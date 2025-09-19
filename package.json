@@ -6,14 +6,16 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "postinstall": "npm run copy-worker",
+    "copy-worker": "node -e \"require('fs').copyFileSync('node_modules/pdfjs-dist/build/pdf.worker.min.mjs', 'public/pdf.worker.min.mjs')\""
   },
   "dependencies": {
     "@react-router/node": "^7.7.1",
     "@react-router/serve": "^7.7.1",
     "clsx": "^2.1.1",
     "isbot": "^5.1.27",
-    "pdfjs-dist": "^5.4.54",
+    "pdfjs-dist": "^5.4.54",                             c
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-dropzone": "^14.3.8",
