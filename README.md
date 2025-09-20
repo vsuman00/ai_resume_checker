@@ -121,8 +121,6 @@ npm run dev
 
 ## Configuration
 
-```
-
 ### Available Scripts
 
 - `npm run dev` - Start development server with hot reload
@@ -217,4 +215,7 @@ The above copyright notice and this permission notice shall be included in all c
 **Made with ❤️ for job seekers everywhere**
 
 For questions, suggestions, or support, please open an issue on GitHub or contact the maintainers.
+
+```
+
 ```
