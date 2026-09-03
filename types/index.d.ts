@@ -14,6 +14,60 @@ interface Resume {
     feedback: Feedback;
 }
 
+// Additive to the frozen Feedback contract (see PLAN.md §4.0).
+// Feeds the new Parse View screen. Pure data — no UI changes required.
+interface ParseViewContact {
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+    links: string[];
+    location: string | null;
+}
+
+interface ParseViewSection {
+    type: "summary" | "experience" | "education" | "skills" | "projects" | "certifications" | "awards" | "publications" | "volunteer" | "languages" | "interests" | "references" | "other";
+    title: string;            // text used to detect the section
+    startLine: number;        // 0-indexed in the source text
+    lineCount: number;        // how many lines the section spans
+    bulletCount: number;      // bullets detected in the section
+    dateStrings: string[];    // date substrings (raw)
+}
+
+interface ParseViewWarning {
+    field: "name" | "email" | "phone" | "location" | "links" | "sections" | "dates" | "bullets" | "overall";
+    severity: "info" | "warn" | "error";
+    message: string;
+}
+
+interface ParseViewData {
+    totalPages: number;
+    totalLines: number;
+    contact: ParseViewContact;
+    sections: ParseViewSection[];
+    warnings: ParseViewWarning[];
+}
+
+// The full server response envelope. Additive to the frozen Feedback
+// contract (see PLAN.md §4.0). `feedback` feeds the existing UI unchanged;
+// the rest feeds the new Parse View + Heatmap screens.
+interface RuleTrace {
+    ruleId: string;
+    label: string;
+    passed: boolean;
+    weight: number;
+    detail: string;
+    evidence?: string[];
+}
+
+interface AnalysisResult {
+    feedback: Feedback;
+    parseView: ParseViewData;
+    ruleTrace: RuleTrace[];
+    jdKeywords: string[];
+    matchedKeywords: string[];
+    missingKeywords: string[];
+}
+
 interface Feedback {
     overallScore: number;
     ATS: {

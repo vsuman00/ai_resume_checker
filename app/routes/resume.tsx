@@ -1,55 +1,71 @@
-import {Link, useNavigate, useParams} from "react-router";
-import {useEffect, useState} from "react";
-import {usePuterStore} from "~/lib/puter";
+import { Link, useNavigate, useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { useAnalysisStore } from "~/lib/store";
+import { convertPdfToImage } from "~/lib/pdf2img";
 import Summary from "~/components/Summary";
 import Details from "~/components/Details";
 import ATS from "~/components/ATS";
+import ParseView from "~/components/ParseView";
+import Heatmap from "~/components/Heatmap";
 
-export const meta = () =>([
-    {title: "Resumide | Review"},
-    {name: "description", content: "Detailed overview of your resume"},
-])
+export const meta = () => ([
+    { title: "Resumide | Review" },
+    { name: "description", content: "Detailed overview of your resume" },
+]);
 
 const Resume = () => {
-    const {auth, isLoading, fs,kv} = usePuterStore()
-    const {id} = useParams()
-    const [imageUrl, setImageUrl] = useState('')
-    const [resumeUrl, setResumeUrl] = useState('')
-    const [feedback, setFeedback] = useState<Feedback | null>(null)
-    const navigate = useNavigate()
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const entry = useAnalysisStore((s) => (id ? s.entries[id] : undefined));
+    const [imageUrl, setImageUrl] = useState("");
+    const [resumeUrl, setResumeUrl] = useState("");
+    const [feedback, setFeedback] = useState<Feedback | null>(null);
 
-    useEffect(() =>{
-        if(!isLoading && !auth.isAuthenticated) navigate(`/auth?next=/resume/${id}`)
-    }, [isLoading])
-    
+    // No auth yet (single-user demo). If the entry isn't in the in-memory store
+    // (e.g. page refresh), send the user home rather than render a blank page.
     useEffect(() => {
-        const laodResume = async () =>{
-            const resume = await kv.get(`resume:${id}`)
-            if(!resume) return;
-            const data = JSON.parse(resume)
-
-            const resumeBlob = await fs.read(data.resumePath)
-            if(!resumeBlob) return;
-
-            const pdfBlob = new Blob([resumeBlob], {type: 'application/pdf'})
-            const resumeUrl = URL.createObjectURL(pdfBlob)
-            setResumeUrl(resumeUrl)
-
-            const imageBlob = await fs.read(data.imagePath)
-            if(!imageBlob) return;
-            const imageUrl = URL.createObjectURL(imageBlob)
-            setImageUrl(imageUrl)
-            setFeedback(data.feedback)
-
-            console.log({resumeUrl, imageUrl, feedback:data.feedback})
+        if (!entry) {
+            const t = setTimeout(() => navigate("/"), 0);
+            return () => clearTimeout(t);
         }
-        laodResume()
-    }, [id]);
+    }, [entry, navigate]);
+
+    // Render the thumbnail + open-in-new-tab link from the stored PDF Blob.
+    // Fixes the original memory leak: revoke object URLs on cleanup.
+    useEffect(() => {
+        if (!entry) return;
+        let revokeImg: string | null = null;
+        let revokePdf: string | null = null;
+
+        setFeedback(entry.result.feedback);
+        const pdfUrl = URL.createObjectURL(entry.pdf);
+        revokePdf = pdfUrl;
+        setResumeUrl(pdfUrl);
+
+        let cancelled = false;
+        convertPdfToImage(entry.pdf).then((res) => {
+            if (cancelled) {
+                if (res.imageUrl) URL.revokeObjectURL(res.imageUrl);
+                return;
+            }
+            if (res.imageUrl) {
+                revokeImg = res.imageUrl;
+                setImageUrl(res.imageUrl);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+            if (revokeImg) URL.revokeObjectURL(revokeImg);
+            if (revokePdf) URL.revokeObjectURL(revokePdf);
+        };
+    }, [entry]);
+
     return (
         <main className="!pt-0">
             <nav className="resume-nav">
                 <Link to="/" className="back-button">
-                    <img src="/icons/back.svg" alt="logo" className="w-2.5 h-2.5"/>
+                    <img src="/icons/back.svg" alt="logo" className="w-2.5 h-2.5" />
                     <span className="text-gray-800 text-sm font-semibold">
                         Back to Homepage
                     </span>
@@ -71,18 +87,25 @@ const Resume = () => {
                 </section>
                 <section className="feedback-section">
                     <h2 className="text-4xl !text-black font-bold">Resume Review</h2>
-                    {feedback? (
+                    {feedback && entry ? (
                         <div className="flex flex-col gap-8 animate-in fade-in duration-1000">
-                            <Summary feedback={feedback}/>
-                            <ATS score={feedback.ATS.score || 0} suggestions={feedback.ATS.tips || []}/>
-                            <Details feedback={feedback}/>
+                            <Summary feedback={feedback} />
+                            <ATS score={feedback.ATS.score || 0} suggestions={feedback.ATS.tips || []} />
+                            <Details feedback={feedback} />
+                            <ParseView parseView={entry.result.parseView} imageUrl={imageUrl} />
+                            <Heatmap
+                                jdKeywords={entry.result.jdKeywords}
+                                matchedKeywords={entry.result.matchedKeywords}
+                                missingKeywords={entry.result.missingKeywords}
+                                ruleTrace={entry.result.ruleTrace}
+                            />
                         </div>
-                    ):(
-                        <img src="/images/resume-scan-2.gif" className="w-full"/>
+                    ) : (
+                        <img src="/images/resume-scan-2.gif" className="w-full" />
                     )}
                 </section>
             </div>
         </main>
-    )
-}
-export default Resume
+    );
+};
+export default Resume;

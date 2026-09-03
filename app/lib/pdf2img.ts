@@ -34,13 +34,14 @@ async function loadPdfJs(): Promise<any> {
 }
 
 export async function convertPdfToImage(
-    file: File
+    file: Blob & { name?: string }
 ): Promise<PdfConversionResult> {
     try {
-        console.log("Starting PDF conversion for file:", file.name);
-        
+        const filename = file.name ?? "resume.pdf";
+        console.log("Starting PDF conversion for file:", filename);
+
         // Validate file type
-        if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+        if (!(file.type ?? "").includes('pdf') && !filename.toLowerCase().endsWith('.pdf')) {
             throw new Error("File is not a PDF");
         }
 
@@ -86,7 +87,7 @@ export async function convertPdfToImage(
                     if (blob) {
                         console.log("Blob created, size:", blob.size, "bytes");
                         // Create a File from the blob with the same name as the PDF
-                        const originalName = file.name.replace(/\.pdf$/i, "");
+                        const originalName = filename.replace(/\.pdf$/i, "");
                         const imageFile = new File([blob], `${originalName}.png`, {
                             type: "image/png",
                         });

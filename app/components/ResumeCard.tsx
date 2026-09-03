@@ -1,22 +1,38 @@
-import {Link} from "react-router";
+import { Link } from "react-router";
 import ScoreCircle from "~/components/ScoreCircle";
-import {useEffect, useState} from "react";
-import {usePuterStore} from "~/lib/puter";
+import { useEffect, useState } from "react";
+import { convertPdfToImage } from "~/lib/pdf2img";
 
-const ResumeCard = ({ resume: { id, companyName, jobTitle, feedback, imagePath } }: { resume: Resume }) => {
-    const { fs } = usePuterStore();
-    const [resumeUrl, setResumeUrl] = useState('');
+// imagePath/resumePath are kept on the Resume type for compatibility but are
+// no longer used — the thumbnail now renders from the optional `pdf` Blob.
+const ResumeCard = ({
+    resume: { id, companyName, jobTitle, feedback },
+    pdf,
+}: {
+    resume: Resume;
+    pdf?: Blob;
+}) => {
+    const [resumeUrl, setResumeUrl] = useState("");
 
     useEffect(() => {
-        const loadResume = async () => {
-            const blob = await fs.read(imagePath);
-            if(!blob) return;
-            let url = URL.createObjectURL(blob);
-            setResumeUrl(url);
-        }
-
-        loadResume();
-    }, [imagePath]);
+        if (!pdf) return;
+        let revoked: string | null = null;
+        let cancelled = false;
+        convertPdfToImage(pdf).then((res) => {
+            if (cancelled) {
+                if (res.imageUrl) URL.revokeObjectURL(res.imageUrl);
+                return;
+            }
+            if (res.imageUrl) {
+                revoked = res.imageUrl;
+                setResumeUrl(res.imageUrl);
+            }
+        });
+        return () => {
+            cancelled = true;
+            if (revoked) URL.revokeObjectURL(revoked);
+        };
+    }, [pdf]);
 
     return (
         <Link to={`/resume/${id}`} className="resume-card animate-in fade-in duration-1000">
@@ -42,6 +58,6 @@ const ResumeCard = ({ resume: { id, companyName, jobTitle, feedback, imagePath }
                 </div>
             )}
         </Link>
-    )
-}
-export default ResumeCard
+    );
+};
+export default ResumeCard;
