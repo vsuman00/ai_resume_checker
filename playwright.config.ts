@@ -12,7 +12,7 @@ export default defineConfig({
   },
   webServer: {
     command:
-      "node --env-file=.env --experimental-strip-types scripts/server.mjs",
+      "node --env-file-if-exists=.env --experimental-strip-types scripts/server.mjs",
     url: "http://127.0.0.1:3110/healthz",
     reuseExistingServer: false,
     timeout: 30_000,

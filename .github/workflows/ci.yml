@@ -39,6 +39,22 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: npx supabase start
+      - name: Configure browser Supabase fixture
+        shell: bash
+        run: |
+          status="$(npx supabase status -o env)"
+          value() {
+            printf '%s\n' "$status" | awk -F= -v key="$1" '$1 == key { sub(/^"/, "", $2); sub(/"$/, "", $2); print $2; exit }'
+          }
+          {
+            echo "SUPABASE_URL=$(value API_URL)"
+            echo "SUPABASE_PUBLISHABLE_KEY=$(value PUBLISHABLE_KEY)"
+            echo "SUPABASE_SECRET_KEY=$(value SECRET_KEY)"
+            echo "SUPABASE_RESUME_BUCKET=resumes"
+            echo "OPENAI_API_KEY=ci-openai-key"
+          } >> "$GITHUB_ENV"
+      - run: npx supabase db reset --local
       - run: npm run test:e2e
       - name: Upload browser failure artifacts
         if: failure()
@@ -70,7 +86,7 @@ jobs:
       - name: Build production image
         run: docker build --tag resumide:${{ github.sha }} .
       - name: Scan production image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: resumide:${{ github.sha }}
           format: table
