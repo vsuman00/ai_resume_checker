@@ -395,7 +395,7 @@ The page must retain the product shell and answer:
 
 ## Visual system conclusion
 
-Use the **Editorial Intelligence plus Precision Evidence** hybrid from `DESIGN_CONCEPTS.md`.
+Use the **Editorial Intelligence plus Precision Evidence** hybrid from [`../archive/DESIGN_CONCEPTS.md`](../archive/DESIGN_CONCEPTS.md).
 
 ### Guidance layer
 

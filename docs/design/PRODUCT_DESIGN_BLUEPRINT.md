@@ -2,7 +2,7 @@
 
 Status: **DESIGN IMPLEMENTED ACROSS ALL ROUTED SURFACES; AUTHENTICATED DATA FIXTURE REVIEW PENDING**
 Direction: Editorial Intelligence + Precision Evidence + tactile document interactions
-Inputs: [`DESIGN.md`](../../DESIGN.md), [`DESIGN_CONCEPTS.md`](../../DESIGN_CONCEPTS.md), and [`COMPETITIVE_UX_RESEARCH.md`](COMPETITIVE_UX_RESEARCH.md)
+Inputs: [`README.md`](README.md), [`../archive/DESIGN_CONCEPTS.md`](../archive/DESIGN_CONCEPTS.md), and [`COMPETITIVE_UX_RESEARCH.md`](COMPETITIVE_UX_RESEARCH.md)
 
 Implementation note, 2026-09-10: the public page, authentication, analysis workspace, Upload, Progress, Result and every result tab, Privacy, and recovery surfaces now use the Evidence Desk structure. Document motion is CSS-only and reduced-motion-safe. Public and signed-out flows pass desktop, mobile, light, dark, and axe checks. A seeded authenticated visual-regression fixture is still required to capture real-data Workspace, Result, and Privacy screenshots.
 

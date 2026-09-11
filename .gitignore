@@ -2,6 +2,7 @@
 ._*
 **/._*
 /node_modules/
+/.agent/
 
 # React Router
 /.react-router/

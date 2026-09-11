@@ -48,13 +48,13 @@ Architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
 ### T002: Make canonical documentation unambiguous
 
 **Dependencies:** T000
-**Likely files:** `README.md`, `CLAUDE.md`, `PLAN.md`, `PLAN-REST.md`, `GAP-REPORT.md`
+**Likely files:** `README.md`, `CLAUDE.md`, `docs/README.md`, `docs/archive/PLAN.md`, `docs/archive/PLAN-REST.md`, `docs/archive/GAP-REPORT.md`
 **Scope:** M
 
 - [x] All stale files point to `ARCHITECTURE.md` and `tasks/` before historical content.
 - [x] README labels current capabilities accurately and removes claims of auth, persistence, enterprise readiness, or completed deployment.
 - [x] Commands and environment setup match the repository.
-- **Verify:** `rg -n "Puter|shipped|enterprise|authentication|Docker-Ready" README.md CLAUDE.md PLAN*.md GAP-REPORT.md`; manually classify every remaining claim as current or historical.
+- **Verify:** `rg -n "Puter|shipped|enterprise|authentication|Docker-Ready" README.md CLAUDE.md docs/archive/PLAN*.md docs/archive/GAP-REPORT.md`; manually classify every remaining claim as current or historical.
 
 ## Phase 1: Production-operable MVP
 

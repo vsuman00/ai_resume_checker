@@ -1,70 +1,47 @@
-# CLAUDE.md
+# Resumide agent guide
 
-> **Canonical context for every implementation agent:** read [`ARCHITECTURE.md`](ARCHITECTURE.md), [`tasks/plan.md`](tasks/plan.md), and [`tasks/todo.md`](tasks/todo.md) before changing code. The current implementation uses React Router SSR, Supabase-backed auth/storage/persistence, leased analysis and privacy workers, OpenAI, and a small client-side result cache. Puter-era details below are retained as historical context and must not override the canonical documents or current source. Do not claim a phase or gate is complete without its named verification evidence and human approval.
+Resumide is a React Router SSR application that combines deterministic ATS compatibility checks with schema-validated qualitative feedback. The current product uses Supabase for authentication, private storage, and durable job state, plus leased workers for analysis and privacy operations.
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Read first
 
-## Project
+Before changing implementation, read these files in order:
 
-**Resumide** — an AI-powered resume analyzer that scores resumes for ATS (Applicant Tracking System) compatibility and produces multi-dimensional feedback (ATS, tone & style, content, structure, skills). Users upload a PDF, optionally supply a job title/description, and receive a JSON-shaped critique from an LLM.
+1. [`ARCHITECTURE.md`](ARCHITECTURE.md) for system boundaries and invariants.
+2. [`tasks/plan.md`](tasks/plan.md) for the gated implementation sequence.
+3. [`tasks/todo.md`](tasks/todo.md) for executable task status and evidence.
+4. [`docs/README.md`](docs/README.md) for the documentation map and verification sources.
+5. The relevant ADR in [`docs/decisions/`](docs/decisions/).
 
-The app is fully client-rendered against the **Puter.js** platform (https://js.puter.com/v2/), which provides auth, filesystem, KV store, and AI chat. There is no traditional backend.
+Preserve the status vocabulary used by the project: `IMPLEMENTED`, `VERIFIED`, `PARTIAL`, `TARGET`, `DEFERRED`, and `BLOCKED`. Documentation is not evidence by itself. Do not mark a phase or gate complete without its named automated evidence and required human approval. Hosted deployment, restore, notification sink, rollback, policy, and deployment-owned security controls remain separate external gates where noted.
 
-## Commands
+## Stack and layout
+
+- Node.js 22, React 19, React Router 7 framework/SSR mode, TypeScript 5, Vite 6, and Tailwind CSS 4.
+- Supabase PostgreSQL, Auth, and private Storage.
+- OpenAI Structured Outputs with Zod for qualitative feedback.
+- Application code lives in `app/`; server workers and scripts live in `scripts/`; SQL migrations live in `supabase/migrations/`.
+- `~/*` resolves to `./app/*`. Generated route types must not be edited by hand.
+
+## Common commands
 
 ```bash
-npm install              # also runs copy-worker (copies pdf.worker.min.mjs into public/)
-npm run dev              # dev server on :5173 (react-router dev)
-npm run build            # production build (react-router build)
-npm run start            # serve the production build with scripts/server.mjs
-npm run typecheck        # react-router typegen && tsc (no emit)
-npm run copy-worker      # copies pdf.worker.min.mjs from node_modules to public/
-npm run test              # unit and integration tests
-npm run test:security     # focused Phase 7 security/privacy/operations tests
-npm run test:e2e          # production-build browser tests
-npm run test:load         # deterministic capacity and recovery report
-npm run test:restore      # deterministic restore ownership/checksum test
-npm run verify            # formatter, lint, tests, typecheck, and build
+npm ci
+npm run dev
+npm run verify:ci
+npm run test:db
+npm run test:e2e
+npm run test:hosted:phase4
+npm run test:hosted:rls
 ```
 
-Docker: `docker build -t resume-ats . && docker run -p 3000:3000 resume-ats`
+Use the focused command that matches the change, then run `npm run verify:ci` before handoff when the environment permits it. Keep `.env` and all secret values local; never commit credentials or place server secrets in browser code.
 
-## Architecture
+## Engineering rules
 
-**Stack:** React 19 · React Router 7 (framework mode, SSR enabled by default) · TypeScript · Vite 6 · TailwindCSS 4 · Zustand
-
-**Path alias:** `~/*` → `./app/*` (configured via `tsconfig.json` + `vite-tsconfig-paths`). `react-router typegen` generates `./app/+types/*` and `./.react-router/types/*` for route-typed `Route` imports.
-
-**Data flow (the whole app, end-to-end):**
-
-1. **Auth gate** — `app/root.tsx` injects `<script src="https://js.puter.com/v2/">` in `<body>`, then `Layout` calls `usePuterStore().init()` on mount. `init()` polls `window.puter` every 100ms (10s timeout) and calls `checkAuthStatus()`. All routes redirect to `/auth?next=<pathname>` if not authenticated.
-2. **Upload** (`app/routes/upload.tsx`) — user picks a PDF via `FileUploader` (react-dropzone). On submit: `fs.upload([pdf])` → `convertPdfToImage(pdf)` (rendered to canvas via `pdfjs-dist`, page 1 at scale 2) → `fs.upload([png])` → `kv.set("resume:<uuid>", JSON)` → `ai.feedback(resumePath, prepareInstructions(...))` → parse JSON response, save back to KV, navigate to `/resume/:id`.
-3. **List** (`app/routes/home.tsx`) — `kv.list("resume:*", true)` parses each value as a `Resume` and renders `ResumeCard`s.
-4. **Detail** (`app/routes/resume.tsx`) — `kv.get("resume:<id>")` → `fs.read` both PDF + image → `URL.createObjectURL` blobs → render `<Summary>`, `<ATS>`, `<Details>`.
-5. **Wipe** (`app/routes/wipe.tsx`) — dev/utility route that lists and deletes all Puter FS files + flushes KV.
-
-**Puter store (`app/lib/puter.ts`)** — single Zustand store exposing `auth`, `fs`, `ai`, `kv` namespaces. Each method handles a missing `window.puter` by setting `error` and returning early. Used everywhere via `const { auth, fs, ai, kv } = usePuterStore()`. The `ai.feedback(path, message)` helper sends a multipart chat message (`type: "file" + type: "text"`) using model `claude-3-7-sonnet`.
-
-**AI prompt contract** — `constants/index.ts` exports `AIResponseFormat` (a TypeScript-shape string the LLM must mimic) and `prepareInstructions({jobTitle, jobDescription})` (system prompt). The model is told to return **only JSON, no backticks, no commentary** — the response is `JSON.parse`d directly. Mismatches here break the detail view.
-
-**PDF rendering** (`app/lib/pdf2img.ts`) — lazily imports `pdfjs-dist/build/pdf.mjs`, sets `workerSrc = "/pdf.worker.min.mjs"` (the file copied by `npm run copy-worker` during postinstall — bumping `pdfjs-dist` requires re-running it). Renders page 1 only to an off-screen `<canvas>` at scale 2, then exports a PNG `Blob` + `File`.
-
-**Type definitions** — `types/index.d.ts` declares `Resume`, `Feedback`, `FSItem`, `PuterUser`, `KVItem`, `ChatMessage`, `PuterChatOptions`, `AIResponse`, and `Job`. `app/lib/puter.ts` augments `window.puter` to type the global injected by the Puter script.
-
-## Conventions
-
-- Route files live in `app/routes/<name>.tsx` and are registered in `app/routes.ts` using `@react-router/dev/routes` helpers (`index`, `route`). Adding a route = edit `routes.ts` + create the file, then the `+types/<name>` import is auto-generated.
-- Each route exports its own `meta()` and a default component.
-- The `constants/index.ts` file is at the repo root (not under `app/`) and imported via relative path (`../../constants`) — unusual; respect it.
-- Components are in `app/components/`, library code in `app/lib/`. Both consumed via `~/...`.
-- Tailwind theme tokens (`--color-dark-200`, `--color-badge-*`, etc.) and the `Mona Sans` font are defined in `app/app.css` via `@theme` / `@import` — reuse them instead of hardcoding colors.
-- The build **must** include `public/pdf.worker.min.mjs`; if you bump `pdfjs-dist`, rerun `npm run copy-worker` (postinstall handles fresh installs).
-
-## Gotchas
-
-- SSR is on (`react-router.config.ts` → `ssr: true`). Any code that touches `window` or `document` (Puter, `pdfjs-dist`, `URL.createObjectURL`, `crypto.randomUUID`) must be guarded or run inside `useEffect`. `usePuterStore().init()` is the canonical pattern.
-- The Puter script is loaded via `<script src="https://js.puter.com/v2/">` in `app/root.tsx` — it is **not** an npm package. If it fails to load within 10s, the store sets an error.
-- AI responses are returned as `string` or `content[0].text`; the upload route handles both. The model is prompted to omit markdown fences, but the parser is naive — bad responses surface as JSON parse errors in the browser.
-- `app/routes/upload.tsx` has a large commented-out `handleAnalyze` above the live one (legacy code from an earlier flow). Don't re-enable it; the live version fixes the same path with error handling and a try/catch.
-- `prepareInstructions` interpolates user input into a prompt — the prompt explicitly tells the model to treat it as data, not as instructions to override the system role.
-- The `resumes` constant in `constants/index.ts` is sample/seed data only — the live home view reads from Puter KV, not this array.
+- Keep migrations forward-only and pair schema changes with recovery notes.
+- Enforce tenant ownership, consent, private storage, same-origin checks, and bounded inputs at the server boundary.
+- Keep resume text, prompts, tokens, and other PII out of logs, metrics, and client telemetry.
+- Treat deterministic scoring and parse evidence as the source of truth; AI feedback is bounded and schema-validated.
+- Preserve unrelated dirty work. Use `apply_patch` for focused edits and do not reset or clean user-owned files.
+- Update the appropriate plan, task, ADR, or runbook when behavior or an operational decision changes.
+- Review links and status claims whenever documentation moves.

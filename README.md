@@ -153,8 +153,10 @@ Before changing implementation code, read:
 3. [`tasks/todo.md`](tasks/todo.md)
 4. Relevant ADRs in [`docs/decisions/`](docs/decisions/)
 
+For the complete documentation map, see [`docs/README.md`](docs/README.md).
+
 Follow numeric task dependencies, preserve unrelated work, and do not mark phases or gates complete without their named automated evidence and human approval.
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE) when present in the distribution.
+MIT. The project license is declared in [`package.json`](package.json).

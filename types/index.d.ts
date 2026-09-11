@@ -14,7 +14,7 @@ interface Resume {
   feedback: Feedback;
 }
 
-// Additive to the frozen Feedback contract (see PLAN.md §4.0).
+// Additive to the frozen Feedback contract (see docs/archive/PLAN.md §4.0).
 // Feeds the new Parse View screen. Pure data — no UI changes required.
 interface ParseViewContact {
   name: string | null;
@@ -79,7 +79,7 @@ interface ParseViewData {
 }
 
 // The full server response envelope. Additive to the frozen Feedback
-// contract (see PLAN.md §4.0). `feedback` feeds the existing UI unchanged;
+// contract (see docs/archive/PLAN.md §4.0). `feedback` feeds the existing UI unchanged;
 // the rest feeds the new Parse View + Heatmap screens.
 interface RuleTrace {
   ruleId: string;
