@@ -1,221 +1,160 @@
-# Resume ATS Checker
+# Resumide
 
-[![React](https://img.shields.io/badge/React-19.1.0-blue.svg)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
-[![React Router](https://img.shields.io/badge/React%20Router-7.7.1-red.svg)](https://reactrouter.com/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1.4-38B2AC.svg)](https://tailwindcss.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+Resumide is a candidate-focused resume analyzer that combines deterministic ATS compatibility checks with schema-validated qualitative AI feedback.
 
-## Description
+> **Current status:** Phase 7 implementation and local acceptance evidence are complete through the security, privacy, observability, recovery, and synthetic capacity slices. Hosted schema migration, tenant/RLS, private-storage, and Phase 4 persistence smoke checks also pass. Gate A4 remains open for hosted restore/staging evidence, notification-sink tests, rollback rehearsal, policy approval, human security/operations sign-off, and deployment-owned controls. Use [`ARCHITECTURE.md`](ARCHITECTURE.md), [`tasks/plan.md`](tasks/plan.md), and [`tasks/todo.md`](tasks/todo.md) as the canonical architecture, implementation sequence, and verification status.
 
-Resume ATS Checker is an intelligent web application that analyzes resumes for Applicant Tracking System (ATS) compatibility and provides comprehensive feedback to help job seekers optimize their resumes. The application uses AI-powered analysis to evaluate resumes across multiple dimensions including ATS compatibility, content quality, structure, tone, and skills alignment with specific job requirements.
+## Current capabilities
 
-## Features
+- React Router SSR application with a server-side `/api/analyze` resource action.
+- PDF signature, MIME, and size validation before analysis.
+- Multi-page PDF text extraction with `unpdf`.
+- Deterministic parse simulation, ATS rules, keyword evidence, and score trace.
+- OpenAI Structured Outputs for qualitative feedback and grounded writing suggestions.
+- Existing summary, ATS, detail, parse-view, keyword, and resume-writer UI surfaces.
+- Supabase-backed authentication, private resume storage, durable analysis/job state, ownership checks, consent, audit events, and idempotent queued analysis creation.
+- Leased analysis and privacy workers with retry/failure states, retention cleanup, export manifests, and deletion execution.
+- Security headers, same-origin enforcement, bounded session cookies, PII-safe structured telemetry, RED/job/provider metrics, and a protected metrics endpoint.
+- Threat-model, privacy data-map, SLO/runbook, backup/restore, load/recovery, and Phase 7 decision documentation.
 
-- 🔍 **ATS Score Analysis** - Comprehensive scoring system that evaluates how well your resume performs in Applicant Tracking Systems
-- 📊 **Multi-Dimensional Feedback** - Detailed analysis across five key areas:
-  - ATS Compatibility
-  - Content Quality
-  - Resume Structure
-  - Tone and Style
-  - Skills Assessment
-- 📄 **PDF Processing** - Upload and analyze PDF resumes with automatic conversion to images for visual feedback
-- 🎯 **Job-Specific Analysis** - Tailored feedback based on specific job titles and descriptions
-- 💾 **Resume Management** - Track and manage multiple resume versions and their analysis results
-- 🔐 **Secure Authentication** - User authentication system for personalized resume tracking
-- 📱 **Responsive Design** - Modern, mobile-friendly interface built with TailwindCSS
-- ⚡ **Real-time Processing** - Fast analysis with visual progress indicators
-- 🎨 **Interactive UI Components** - Score gauges, progress indicators, and detailed feedback cards
+Resumide provides **ATS compatibility guidance and parse simulation**. It does not emulate or guarantee acceptance by a proprietary ATS, and it must not be used for automatic hiring decisions.
 
-## Installation
+## Stack
+
+- Node.js 22 LTS
+- React 19
+- React Router 7.18.3 in framework/SSR mode
+- TypeScript 5
+- Vite 6
+- Tailwind CSS 4
+- Zustand
+- OpenAI SDK with Zod Structured Outputs
+- Supabase PostgreSQL 17, Auth, and private Storage
+
+## Local development
 
 ### Prerequisites
 
-- Node.js 20 or higher
-- npm or yarn package manager
-- Docker (optional, for containerized deployment)
+- Node.js 22 LTS
+- npm
+- OpenAI API credentials
+- Supabase credentials when exercising readiness, auth, storage, or persistence code
+- Docker Desktop only for local Supabase execution and container verification
 
-### Local Development Setup
-
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd Resume_ATS
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Copy PDF worker file**
-
-   ```bash
-   npm run copy-worker
-   ```
-
-4. **Start the development server**
-
-   ```bash
-   npm run dev
-   ```
-
-5. **Open your browser**
-   Navigate to `http://localhost:5173` to access the application.
-
-### Docker Deployment
-
-1. **Build the Docker image**
-
-   ```bash
-   docker build -t resume-ats .
-   ```
-
-2. **Run the container**
-   ```bash
-   docker run -p 3000:3000 resume-ats
-   ```
-
-## Usage
-
-### Basic Operation
-
-1. **Authentication**
-   - Navigate to the application and sign in with your credentials
-   - New users can create an account through the authentication page
-
-2. **Upload Resume**
-   - Click on "Upload Resume" or navigate to `/upload`
-   - Drag and drop your PDF resume or click to select a file
-   - Enter the job title and company name for targeted analysis
-   - Optionally provide a job description for more specific feedback
-
-3. **Analysis Process**
-   - The system will process your resume through multiple stages:
-     - File upload and validation
-     - PDF to image conversion
-     - AI-powered content analysis
-     - Score calculation and feedback generation
-
-4. **Review Results**
-   - View your overall ATS score (0-100)
-   - Explore detailed feedback in five categories
-   - Review specific tips and recommendations
-   - Save results for future reference
-
-### Example Workflow
+### Install
 
 ```bash
-# Start the application
-npm run dev
-
-# Navigate to http://localhost:5173
-# 1. Sign in or create account
-# 2. Upload your resume PDF
-# 3. Enter job details (title, company, description)
-# 4. Wait for analysis completion
-# 5. Review comprehensive feedback and scores
+npm ci
 ```
 
-## Configuration
+Installation copies `pdf.worker.min.mjs` from `pdfjs-dist` into `public/` through the `postinstall` script.
 
-### Available Scripts
+### Environment
 
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build production-ready application
-- `npm run start` - Start production server
-- `npm run typecheck` - Run TypeScript type checking
-- `npm run copy-worker` - Copy PDF.js worker file to public directory
+Create a local `.env` from `.env.example`. Required server values are validated by `app/lib/server/config.ts`:
 
-### Customization
+```dotenv
+NODE_ENV=development
+APP_ORIGIN=http://localhost:5173
 
-The application can be customized through:
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_SECRET_KEY=sb_secret_...
+SUPABASE_RESUME_BUCKET=resumes
+ANALYZE_INVITE_TOKEN=<temporary invite token, at least 16 random characters>
+ANALYZE_RATE_LIMIT=5
+ANALYZE_RATE_WINDOW_SECONDS=60
 
-- **Styling**: Modify TailwindCSS configuration in `tailwind.config.js`
-- **Scoring Logic**: Update scoring algorithms in the constants file
-- **UI Components**: Customize React components in the `app/components` directory
-- **Routes**: Add or modify routes in the `app/routes` directory
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-5.6-luna
+OPENAI_TIMEOUT_MS=20000
+OPENAI_MAX_OUTPUT_TOKENS=1200
+QUALITATIVE_MAX_ATTEMPTS=1
+MAX_UPLOAD_BYTES=10485760
+CSP_MODE=report-only
+SESSION_MAX_AGE_SECONDS=3600
+RETENTION_DAYS=30
+```
 
-## Contributing
+Never commit `.env` or expose `SUPABASE_SECRET_KEY`/`OPENAI_API_KEY` to browser code.
 
-We welcome contributions to improve the Resume ATS Checker! Please follow these guidelines:
+### Run
 
-### Getting Started
+```bash
+npm run dev
+```
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Make your changes and commit them: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature-name`
-5. Submit a pull request
+Open `http://localhost:5173`.
 
-### Development Guidelines
+## Commands
 
-- Follow TypeScript best practices and maintain type safety
-- Use consistent code formatting (Prettier recommended)
-- Write meaningful commit messages
-- Add tests for new features when applicable
-- Update documentation for significant changes
-- Ensure all existing tests pass before submitting
+```bash
+npm run dev          # React Router development server
+npm run build        # Production client and SSR build
+npm run start        # Serve the production build on port 3000 by default
+npm run typecheck    # Generate route types and run TypeScript
+npm run test         # Unit and integration tests
+npm run test:security # Focused security, privacy, observability, and recovery tests
+npm run test:e2e     # Production-build browser and accessibility tests
+npm run test:a11y    # Dedicated axe accessibility checks
+npm run test:load    # Deterministic Phase 7 load/recovery acceptance report
+npm run test:restore # Deterministic ownership/checksum restore verification
+npm run check:alerts  # Validate the checked-in Prometheus SLO rules
+npm run check:container # Validate runtime image hardening invariants
+npm run worker:privacy:once # Process one queued export/deletion request
+npm run worker:retention:once # Process one retention cleanup sweep
+npm run verify       # Format, lint, test, typecheck, and build
+npm run verify:ci    # Reproduce all CI quality and browser gates locally
+npm run copy-worker  # Refresh the public PDF.js worker
+```
 
-### Code Style
+## Current data flow
 
-- Use functional components with React hooks
-- Follow React Router v7 patterns for routing
-- Maintain consistent file and folder naming conventions
-- Use TailwindCSS for styling with semantic class names
-- Implement proper error handling and loading states
+1. The authenticated upload page sends a PDF, consent, and optional job details to `/api/analyze`.
+2. The server validates origin, rate limit, request/file boundaries, consent, and tenant ownership, then uploads the private PDF and creates an idempotent durable analysis/job record.
+3. The analysis worker claims the job with a lease, extracts text from all PDF pages, runs deterministic ATS rules, and obtains schema-validated grounded qualitative feedback.
+4. Results, stage status, audit events, and signed private-file access are persisted in Supabase; the browser polls status and renders only owned terminal results.
+5. Privacy requests are handled asynchronously by a leased worker, while retention cleanup removes expired private objects with retryable failure state.
+6. Request IDs, PII-safe logs, RED/job/provider metrics, and content-free client telemetry support operations without putting resume text or prompt content into telemetry.
 
-### Reporting Issues
+## Supabase
 
-- Use the GitHub issue tracker to report bugs
-- Provide detailed reproduction steps
-- Include relevant system information and error messages
-- Search existing issues before creating new ones
+The hosted Resumide project is in `ap-south-1`. Database changes are owned by SQL files in `supabase/migrations/` and applied through the managed migration workflow.
+
+The current schema includes profiles, organizations, jobs, resumes, resume versions, analyses, analysis results, and writer drafts. Application tables have RLS enabled, and resume PDFs use a private 10 MiB PDF-only Storage bucket.
+
+Do not mutate the remote schema manually without a corresponding forward migration and recovery notes.
+
+## Docker and deployment
+
+For a local production run, inject configuration explicitly rather than relying on ambient development settings:
+
+```bash
+npm run build
+NODE_ENV=production APP_ORIGIN=http://localhost:3000 \
+  SUPABASE_URL=... SUPABASE_PUBLISHABLE_KEY=... SUPABASE_SECRET_KEY=... \
+  OPENAI_API_KEY=... npm run start
+```
+
+Container runs must also inject secrets rather than copying them into the image:
+
+```bash
+docker run --env-file .env -p 3000:3000 resume-ats
+```
+
+Fly.io in Mumbai is the approved target, with separate web and worker process groups from one tested artifact. The Dockerfile, runtime-user checks, image build, and container health/readiness smoke pass locally; deployment readiness still depends on the A4 staging, policy, rollback, and deployment-owned security evidence listed above.
+
+## Architecture and contribution workflow
+
+Before changing implementation code, read:
+
+1. [`ARCHITECTURE.md`](ARCHITECTURE.md)
+2. [`tasks/plan.md`](tasks/plan.md)
+3. [`tasks/todo.md`](tasks/todo.md)
+4. Relevant ADRs in [`docs/decisions/`](docs/decisions/)
+
+Follow numeric task dependencies, preserve unrelated work, and do not mark phases or gates complete without their named automated evidence and human approval.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-### MIT License Summary
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-## Acknowledgements
-
-### Technologies and Libraries
-
-- **[React](https://reactjs.org/)** - A JavaScript library for building user interfaces
-- **[React Router](https://reactrouter.com/)** - Declarative routing for React applications
-- **[TypeScript](https://www.typescriptlang.org/)** - Typed superset of JavaScript
-- **[TailwindCSS](https://tailwindcss.com/)** - A utility-first CSS framework
-- **[PDF.js](https://mozilla.github.io/pdf.js/)** - PDF rendering library for JavaScript
-- **[React Dropzone](https://react-dropzone.js.org/)** - File upload component for React
-- **[Zustand](https://github.com/pmndrs/zustand)** - Small, fast, and scalable state management
-- **[Vite](https://vitejs.dev/)** - Next generation frontend tooling
-
-### Special Thanks
-
-- The open-source community for providing excellent tools and libraries
-- Contributors who help improve the application
-- Users who provide valuable feedback and suggestions
-- The React and TypeScript communities for comprehensive documentation
-
-### Resources
-
-- [ATS Best Practices Guide](https://www.indeed.com/career-advice/resumes-cover-letters/ats-resume)
-- [Resume Writing Guidelines](https://www.harvard.edu/careers/resume-writing-guide)
-- [PDF.js Documentation](https://mozilla.github.io/pdf.js/getting_started/)
-
----
-
-**Made with ❤️ for job seekers everywhere**
-
-For questions, suggestions, or support, please open an issue on GitHub or contact the maintainers.
-
-```
-
-```
+MIT. See [`LICENSE`](LICENSE) when present in the distribution.

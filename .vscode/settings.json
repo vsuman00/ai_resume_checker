@@ -1,3 +1,8 @@
 {
-  "cSpell.words": ["laod", "Puter", "Resumide"]
+  "cSpell.words": ["laod", "Puter", "Resumide"],
+  "chat.mcp.serverSampling": {
+    "resume_ats/.vscode/mcp.json: supabase": {
+      "allowedModels": ["copilotcli/auto", "copilot/auto"]
+    }
+  }
 }

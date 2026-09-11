@@ -11,10 +11,11 @@
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
     "rootDirs": [".", "./.react-router/types"],
-    "baseUrl": ".",
     "paths": {
+      // Relative to this tsconfig; baseUrl is deprecated in TS 6.0 and not needed.
       "~/*": ["./app/*"]
     },
     "esModuleInterop": true,

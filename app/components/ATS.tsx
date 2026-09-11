@@ -1,77 +1,68 @@
-import React from 'react'
+import { scoreBand } from "~/lib/score-band";
 
 interface Suggestion {
-    type: "good" | "improve";
-    tip: string;
+  type: "good" | "improve";
+  tip: string;
 }
 
 interface ATSProps {
-    score: number;
-    suggestions: Suggestion[];
+  score: number;
+  suggestions: Suggestion[];
 }
 
-const ATS: React.FC<ATSProps> = ({ score, suggestions }) => {
-    // Determine background gradient based on score
-    const gradientClass = score > 69
-        ? 'from-green-100'
-        : score > 49
-            ? 'from-yellow-100'
-            : 'from-red-100';
+const scoreLabels = {
+  needs_work: "Needs attention",
+  good_start: "Good start",
+  strong: "Strong",
+} as const;
 
-    // Determine icon based on score
-    const iconSrc = score > 69
-        ? '/icons/ats-good.svg'
-        : score > 49
-            ? '/icons/ats-warning.svg'
-            : '/icons/ats-bad.svg';
+const ATS = ({ score, suggestions }: ATSProps) => {
+  const band = scoreBand(score);
 
-    // Determine subtitle based on score
-    const subtitle = score > 69
-        ? 'Great Job!'
-        : score > 49
-            ? 'Good Start'
-            : 'Needs Improvement';
-
-    return (
-        <div className={`bg-gradient-to-b ${gradientClass} to-white rounded-2xl shadow-md w-full p-6`}>
-            {/* Top section with icon and headline */}
-            <div className="flex items-center gap-4 mb-6">
-                <img src={iconSrc} alt="ATS Score Icon" className="w-12 h-12" />
-                <div>
-                    <h2 className="text-2xl font-bold">ATS Score - {score}/100</h2>
-                </div>
-            </div>
-
-            {/* Description section */}
-            <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">{subtitle}</h3>
-                <p className="text-gray-600 mb-4">
-                    This score represents how well your resume is likely to perform in Applicant Tracking Systems used by employers.
-                </p>
-
-                {/* Suggestions list */}
-                <div className="space-y-3">
-                    {suggestions.map((suggestion, index) => (
-                        <div key={index} className="flex items-start gap-3">
-                            <img
-                                src={suggestion.type === "good" ? "/icons/check.svg" : "/icons/warning.svg"}
-                                alt={suggestion.type === "good" ? "Check" : "Warning"}
-                                className="w-5 h-5 mt-1"
-                            />
-                            <p className={suggestion.type === "good" ? "text-green-700" : "text-amber-700"}>
-                                {suggestion.tip}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Closing encouragement */}
-            <p className="text-gray-700 italic">
-                Keep refining your resume to improve your chances of getting past ATS filters and into the hands of recruiters.
-            </p>
+  return (
+    <section
+      className="ats-evidence-overview"
+      aria-labelledby="ats-evidence-heading"
+    >
+      <div className="ats-evidence-heading">
+        <div>
+          <p className="workspace-eyebrow">Compatibility guidance</p>
+          <h2 id="ats-evidence-heading">ATS evidence</h2>
+          <p>
+            This score reflects the deterministic checks and parse simulation
+            available for this resume.
+          </p>
         </div>
-    )
-}
+        <div className={`ats-score-status is-${band}`}>
+          <strong>{score}/100</strong>
+          <span>{scoreLabels[band]}</span>
+        </div>
+      </div>
 
-export default ATS
+      {suggestions.length > 0 ? (
+        <ul className="ats-suggestion-list">
+          {suggestions.map((suggestion) => (
+            <li
+              key={`${suggestion.type}-${suggestion.tip}`}
+              className={suggestion.type === "good" ? "is-good" : "is-improve"}
+            >
+              <span className="ats-suggestion-indicator" aria-hidden="true" />
+              <div>
+                <small>
+                  {suggestion.type === "good" ? "Strength" : "Needs attention"}
+                </small>
+                <p>{suggestion.tip}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="result-empty-copy">
+          No ATS guidance is available for this analysis.
+        </p>
+      )}
+    </section>
+  );
+};
+
+export default ATS;

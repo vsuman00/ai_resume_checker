@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit signatures
+      - run: npm run scan:secrets
+      - run: npm run check:alerts
+      - run: npm run check:container
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run test:load
+      - run: npm run test:restore
+      - run: npm run benchmark:phase5
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+
+  browser:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-artifacts
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  database:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx supabase start
+      - run: npm run test:db
+
+  container:
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build --tag resumide:${{ github.sha }} .
+      - name: Scan production image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: resumide:${{ github.sha }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH

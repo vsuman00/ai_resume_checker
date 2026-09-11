@@ -1,0 +1,98 @@
+{
+  "apiVersion": "monitoring.coreos.com/v1",
+  "kind": "PrometheusRule",
+  "metadata": {
+    "name": "resumide-phase7-slos",
+    "labels": {
+      "app": "resumide",
+      "managed-by": "deployment"
+    }
+  },
+  "spec": {
+    "groups": [
+      {
+        "name": "resumide.slos",
+        "rules": [
+          {
+            "alert": "ResumideAvailabilityErrorBudgetBurn",
+            "expr": "sum(rate(http_requests_total{status=\"5xx\"}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 1) > 0.005",
+            "for": "5m",
+            "labels": {
+              "severity": "page",
+              "owner": "platform"
+            },
+            "annotations": {
+              "summary": "Resumide is consuming the availability error budget",
+              "runbook": "docs/operations/RUNBOOKS.md#rollback-rehearsal"
+            }
+          },
+          {
+            "alert": "ResumideApiLatencyP95",
+            "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_ms_bucket{route!~\"/api/analyze|/analysis.*\"}[15m]))) > 500",
+            "for": "15m",
+            "labels": {
+              "severity": "ticket",
+              "owner": "platform"
+            },
+            "annotations": {
+              "summary": "Non-analysis API p95 latency is above 500 ms",
+              "runbook": "docs/operations/RUNBOOKS.md#worker-backlog-or-stalled-lease"
+            }
+          },
+          {
+            "alert": "ResumideJobTerminalFailure",
+            "expr": "sum(rate(analysis_jobs_total{event=\"failed\"}[30m])) / clamp_min(sum(rate(analysis_jobs_total{event=~\"completed|failed\"}[30m])), 1) > 0.01",
+            "for": "30m",
+            "labels": {
+              "severity": "page",
+              "owner": "operations"
+            },
+            "annotations": {
+              "summary": "More than 1% of analysis jobs are failing terminally",
+              "runbook": "docs/operations/RUNBOOKS.md#worker-backlog-or-stalled-lease"
+            }
+          },
+          {
+            "alert": "ResumideQueueAge",
+            "expr": "histogram_quantile(0.95, sum by (le) (rate(analysis_queue_age_ms_bucket[10m]))) > 300000",
+            "for": "10m",
+            "labels": {
+              "severity": "page",
+              "owner": "operations"
+            },
+            "annotations": {
+              "summary": "The p95 analysis queue age is above five minutes",
+              "runbook": "docs/operations/RUNBOOKS.md#worker-backlog-or-stalled-lease"
+            }
+          },
+          {
+            "alert": "ResumideProviderCostAnomaly",
+            "expr": "sum(rate(provider_cost_usd_total[15m])) > 2 * clamp_min(sum(increase(provider_cost_usd_total[7d])) / 604800, 0.000001)",
+            "for": "15m",
+            "labels": {
+              "severity": "ticket",
+              "owner": "finance-operations"
+            },
+            "annotations": {
+              "summary": "Provider spend is above twice the seven-day baseline",
+              "runbook": "docs/operations/RUNBOOKS.md#provider-outage-or-throttling"
+            }
+          },
+          {
+            "alert": "ResumideReadinessFailure",
+            "expr": "sum(rate(http_requests_total{route=\"/readyz\",status=\"5xx\"}[5m])) > 0",
+            "for": "5m",
+            "labels": {
+              "severity": "page",
+              "owner": "platform"
+            },
+            "annotations": {
+              "summary": "Resumide readiness has failed for five minutes",
+              "runbook": "docs/operations/RUNBOOKS.md#failed-migration"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

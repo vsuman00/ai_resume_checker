@@ -41,6 +41,25 @@ export const QualitativeFeedbackSchema = z.object({
 
 export type QualitativeFeedbackZod = z.infer<typeof QualitativeFeedbackSchema>;
 
+const ResumeWriterSchema = z.object({
+  summary: z.string().min(1).max(1_200).nullable(),
+  bullets: z
+    .array(
+      z.object({
+        original: z.string().min(1).max(500),
+        rewrite: z.string().min(1).max(700),
+        reasoning: z.string().min(1).max(500),
+      }),
+    )
+    .max(4),
+});
+
+export const QualitativeAnalysisSchema = QualitativeFeedbackSchema.extend({
+  writer: ResumeWriterSchema,
+});
+
+export type ResumeWriterZod = z.infer<typeof ResumeWriterSchema>;
+
 // The full Feedback contract returned to the client. The LLM fills
 // the 4 qualitative categories; the server fills ATS + overallScore
 // deterministically. The shape is identical to the frozen Feedback
@@ -59,9 +78,19 @@ export type FeedbackZod = z.infer<typeof FeedbackSchema>;
 // Additive: parseView feeds the new Parse View screen. Does not alter
 // the frozen Feedback contract.
 const SectionType = z.enum([
-  "summary", "experience", "education", "skills", "projects",
-  "certifications", "awards", "publications", "volunteer",
-  "languages", "interests", "references", "other",
+  "summary",
+  "experience",
+  "education",
+  "skills",
+  "projects",
+  "certifications",
+  "awards",
+  "publications",
+  "volunteer",
+  "languages",
+  "interests",
+  "references",
+  "other",
 ]);
 
 export const ParseViewSchema = z.object({
@@ -74,19 +103,44 @@ export const ParseViewSchema = z.object({
     links: z.array(z.string()),
     location: z.string().nullable(),
   }),
-  sections: z.array(z.object({
-    type: SectionType,
-    title: z.string(),
-    startLine: z.number().int().min(0),
-    lineCount: z.number().int().min(0),
-    bulletCount: z.number().int().min(0),
-    dateStrings: z.array(z.string()),
-  })),
-  warnings: z.array(z.object({
-    field: z.enum(["name", "email", "phone", "location", "links", "sections", "dates", "bullets", "overall"]),
-    severity: z.enum(["info", "warn", "error"]),
-    message: z.string(),
-  })),
+  sections: z.array(
+    z.object({
+      type: SectionType,
+      title: z.string(),
+      startLine: z.number().int().min(0),
+      lineCount: z.number().int().min(0),
+      bulletCount: z.number().int().min(0),
+      dateStrings: z.array(z.string()),
+    }),
+  ),
+  warnings: z.array(
+    z.object({
+      field: z.enum([
+        "name",
+        "email",
+        "phone",
+        "location",
+        "links",
+        "sections",
+        "dates",
+        "bullets",
+        "overall",
+      ]),
+      severity: z.enum(["info", "warn", "error"]),
+      message: z.string(),
+    }),
+  ),
+  pages: z
+    .array(
+      z.object({
+        pageNumber: z.number().int().min(1),
+        text: z.string(),
+        lineCount: z.number().int().min(0),
+        confidence: z.enum(["high", "medium", "low"]),
+        warnings: z.array(z.string()),
+      }),
+    )
+    .default([]),
 });
 
 export type ParseViewZod = z.infer<typeof ParseViewSchema>;
@@ -94,17 +148,55 @@ export type ParseViewZod = z.infer<typeof ParseViewSchema>;
 export const AnalysisResultSchema = z.object({
   feedback: FeedbackSchema,
   parseView: ParseViewSchema,
-  ruleTrace: z.array(z.object({
-    ruleId: z.string(),
-    label: z.string(),
-    passed: z.boolean(),
-    weight: z.number().int().min(0),
-    detail: z.string(),
-    evidence: z.array(z.string()).optional(),
-  })),
+  ruleTrace: z.array(
+    z.object({
+      ruleId: z.string(),
+      label: z.string(),
+      passed: z.boolean(),
+      outcome: z.enum(["passed", "failed", "not_evaluated"]).optional(),
+      confidence: z.enum(["high", "none"]).optional(),
+      weight: z.number().int().min(0),
+      detail: z.string(),
+      evidence: z.array(z.string()).optional(),
+    }),
+  ),
   jdKeywords: z.array(z.string()),
   matchedKeywords: z.array(z.string()),
   missingKeywords: z.array(z.string()),
+  uncertainKeywords: z.array(z.string()).default([]),
+  keywordEvidence: z
+    .array(
+      z.object({
+        term: z.string(),
+        taxonomyId: z.string().nullable(),
+        kind: z.enum(["taxonomy", "keyword"]),
+        uncertain: z.boolean().default(false),
+        job: z.object({
+          occurrenceCount: z.number().int().min(0),
+          spans: z.array(
+            z.object({
+              start: z.number().int().min(0),
+              end: z.number().int().min(0),
+              text: z.string(),
+              alias: z.string(),
+            }),
+          ),
+        }),
+        resume: z.object({
+          occurrenceCount: z.number().int().min(0),
+          spans: z.array(
+            z.object({
+              start: z.number().int().min(0),
+              end: z.number().int().min(0),
+              text: z.string(),
+              alias: z.string(),
+            }),
+          ),
+        }),
+      }),
+    )
+    .default([]),
+  writer: ResumeWriterSchema,
 });
 
 export type AnalysisResultZod = z.infer<typeof AnalysisResultSchema>;

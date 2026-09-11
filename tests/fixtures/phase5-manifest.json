@@ -1,0 +1,18 @@
+{
+  "version": "phase5-fixtures-v1",
+  "permittedUse": "automated parser, deterministic scoring, and matching regression tests only",
+  "fixtures": [
+    {
+      "path": "parsing/t051-labeled.json",
+      "provenance": "fully synthetic",
+      "anonymization": "contains no real-person data",
+      "expectedOutputs": "contact, section, and layout-warning labels"
+    },
+    {
+      "path": "matching/t052-labeled.json",
+      "provenance": "fully synthetic",
+      "anonymization": "contains no real-person data",
+      "expectedOutputs": "canonical terms, coverage labels, and evidence spans"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "status": "approved",
+  "version": "phase5-thresholds-v1",
+  "approvedBy": "Scoring/product owner instruction",
+  "approvedAt": "2026-09-11",
+  "approvalBasis": "Synthetic Phase 5 corpus benchmark; score claims remain ATS-like guidance and not a proprietary ATS guarantee.",
+  "approvedMinimums": {
+    "fieldPrecision": 0.95,
+    "fieldRecall": 0.95,
+    "sectionF1": 0.9,
+    "matchPrecision": 0.95,
+    "matchRecall": 0.95,
+    "maxFailureRate": 0,
+    "maxP95LatencyMs": 10
+  }
+}

@@ -1,9 +1,25 @@
-import {type RouteConfig, index, route} from "@react-router/dev/routes";
+import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
-    index("routes/home.tsx"),
-    route('/upload', "routes/upload.tsx"),
-    route('/resume/:id', "routes/resume.tsx"),
-    route('/api/analyze', "routes/api.analyze.ts"),
-    route('/.well-known/appspecific/com.chrome.devtools.json', "routes/chrome-devtools.ts")
+  index("routes/home.tsx"),
+  route("/auth", "routes/auth.tsx"),
+  route("/auth/callback", "routes/auth.callback.ts"),
+  route("/auth/logout", "routes/auth.logout.ts"),
+  route("/account", "routes/account.tsx"),
+  route("/privacy", "routes/privacy.tsx"),
+  route("/upload", "routes/upload.tsx"),
+  route("/resume/:id", "routes/resume.tsx"),
+  route("/analysis/:id", "routes/analysis.tsx"),
+  route("/api/analyze", "routes/api.analyze.ts"),
+  route("/api/analysis/:id", "routes/api.analysis-status.ts"),
+  route("/api/analysis/:id/cancel", "routes/api.analysis-cancel.ts"),
+  route("/api/telemetry", "routes/api.telemetry.ts"),
+  route("/api/privacy/requests/:id/export", "routes/api.privacy-export.ts"),
+  route("/metrics", "routes/metrics.ts"),
+  route("/healthz", "routes/healthz.ts"),
+  route("/readyz", "routes/readyz.ts"),
+  route(
+    "/.well-known/appspecific/com.chrome.devtools.json",
+    "routes/chrome-devtools.ts",
+  ),
 ] satisfies RouteConfig;

@@ -1,45 +1,56 @@
-import ScoreBadge from "~/components/ScoreBadge";
-import ScoreGauge from "~/components/ScoreGauge";
+import { scoreBand } from "~/lib/score-band";
 
-const Category = ({ title, score }: { title: string, score: number }) => {
-    const textColor = score > 70 ? 'text-green-600'
-        : score > 49
-            ? 'text-yellow-600' : 'text-red-600';
+const scoreLabels = {
+  needs_work: "Needs attention",
+  good_start: "Good start",
+  strong: "Strong",
+} as const;
 
-    return (
-        <div className="resume-summary">
-            <div className="category">
-                <div className="flex flex-row gap-2 items-center justify-center">
-                    <p className="text-2xl">{title}</p>
-                    <ScoreBadge score={score} />
-                </div>
-                <p className="text-2xl">
-                    <span className={textColor}>{score}</span>/100
-                </p>
-            </div>
+const Category = ({ title, score }: { title: string; score: number }) => {
+  const band = scoreBand(score);
+
+  return (
+    <div
+      className="result-score-category"
+      role="group"
+      aria-label={`${title} score`}
+    >
+      <div>
+        <strong>{title}</strong>
+        <span className={`result-category-band is-${band}`}>
+          {scoreLabels[band]}
+        </span>
+      </div>
+      <span className={`result-category-value is-${band}`}>{score}/100</span>
+    </div>
+  );
+};
+
+const Summary = ({ feedback }: { feedback: Feedback }) => {
+  return (
+    <section
+      className="result-score-breakdown"
+      aria-labelledby="score-breakdown-heading"
+    >
+      <div className="result-section-heading">
+        <div>
+          <p className="workspace-eyebrow">Score breakdown</p>
+          <h2 id="score-breakdown-heading">Where the score comes from</h2>
         </div>
-    )
-}
-
-const Summary = ({feedback}:{feedback:Feedback}) => {
-    return (
-        <div className="bg-white rounded-2xl shadow-md w-full">
-            <div className="flex flex-row items-center p-4 gap-8">
-                <ScoreGauge score={feedback.overallScore}/>
-
-                <div className="flex flex-col gap-2">
-                    <h2 className="text-2xl font-bold">Your Resume Score</h2>
-                    <p className="text-sm text-gray-500">
-                        This score is calculated based on the variables listed below.
-                    </p>
-                </div>
-            </div>
-            
-            <Category title="Tone & Style" score={feedback.toneAndStyle.score} />
-            <Category title="Content" score={feedback.content.score} />
-            <Category title="Structure" score={feedback.structure.score} />
-            <Category title="Skills" score={feedback.skills.score} />
-        </div>
-    )
-}
-export default Summary
+        <span>0 to 100</span>
+      </div>
+      <p className="result-score-breakdown-intro">
+        Each area is scored independently so you can focus on the changes with
+        the clearest evidence.
+      </p>
+      <div className="result-score-category-list">
+        <Category title="ATS compatibility" score={feedback.ATS.score} />
+        <Category title="Tone and style" score={feedback.toneAndStyle.score} />
+        <Category title="Content" score={feedback.content.score} />
+        <Category title="Structure" score={feedback.structure.score} />
+        <Category title="Skills" score={feedback.skills.score} />
+      </div>
+    </section>
+  );
+};
+export default Summary;

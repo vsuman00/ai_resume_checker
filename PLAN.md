@@ -1,5 +1,7 @@
 # Resumide — Differentiation & Build Plan (Solo Indie, B2C-first)
 
+> **Historical product strategy.** For the current target architecture, gated implementation sequence, and executable task state, use [`ARCHITECTURE.md`](ARCHITECTURE.md), [`tasks/plan.md`](tasks/plan.md), and [`tasks/todo.md`](tasks/todo.md). This file does not prove implementation or verification status.
+
 *Goal: an in-depth resume analysis + builder that helps job seekers (especially students) build resumes that pass screening for a specific job/company — and is meaningfully different from Jobscan, Teal, ResumeWorded, Rezi.*
 
 ---

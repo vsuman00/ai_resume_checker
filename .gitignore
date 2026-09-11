@@ -1,9 +1,12 @@
 .DS_Store
+._*
+**/._*
 /node_modules/
 
 # React Router
 /.react-router/
 /build/
+/test-results/
 
 # Secrets — never commit
 .env

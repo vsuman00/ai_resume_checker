@@ -13,9 +13,55 @@ function toUint8Array(pdf: Buffer | Uint8Array): Uint8Array {
   return copy;
 }
 
-export async function extractResumeText(pdf: Buffer | Uint8Array): Promise<{ totalPages: number; text: string }> {
+export type ResumeExtractionErrorCode =
+  "INVALID_PDF" | "PAGE_LIMIT" | "EMPTY_TEXT" | "TEXT_LIMIT";
+
+export class ResumeExtractionError extends Error {
+  readonly code: ResumeExtractionErrorCode;
+
+  constructor(code: ResumeExtractionErrorCode) {
+    super(code);
+    this.name = "ResumeExtractionError";
+    this.code = code;
+  }
+}
+
+export async function extractResumeText(
+  pdf: Buffer | Uint8Array,
+  limits: { maxPages?: number; maxCharacters?: number } = {},
+): Promise<{ totalPages: number; text: string; pageTexts?: string[] }> {
   const bytes = toUint8Array(pdf);
-  const doc = await getDocumentProxy(bytes);
-  const { totalPages, text } = await extractText(doc, { mergePages: true });
-  return { totalPages, text: Array.isArray(text) ? text.join("\n\n") : text };
+  let doc;
+  try {
+    doc = await getDocumentProxy(bytes);
+  } catch {
+    throw new ResumeExtractionError("INVALID_PDF");
+  }
+
+  if (limits.maxPages !== undefined && doc.numPages > limits.maxPages) {
+    throw new ResumeExtractionError("PAGE_LIMIT");
+  }
+
+  let extracted;
+  try {
+    extracted = await extractText(doc, { mergePages: false });
+  } catch {
+    throw new ResumeExtractionError("INVALID_PDF");
+  }
+
+  const pageTexts = Array.isArray(extracted.text)
+    ? extracted.text
+    : [extracted.text];
+  const text = pageTexts.join("\n\n");
+  if (text.trim().length === 0) {
+    throw new ResumeExtractionError("EMPTY_TEXT");
+  }
+  if (
+    limits.maxCharacters !== undefined &&
+    text.length > limits.maxCharacters
+  ) {
+    throw new ResumeExtractionError("TEXT_LIMIT");
+  }
+
+  return { totalPages: extracted.totalPages, text, pageTexts };
 }

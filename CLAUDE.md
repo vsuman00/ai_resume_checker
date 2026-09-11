@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> **Canonical context for every implementation agent:** read [`ARCHITECTURE.md`](ARCHITECTURE.md), [`tasks/plan.md`](tasks/plan.md), and [`tasks/todo.md`](tasks/todo.md) before changing code. The current implementation uses React Router SSR, Supabase-backed auth/storage/persistence, leased analysis and privacy workers, OpenAI, and a small client-side result cache. Puter-era details below are retained as historical context and must not override the canonical documents or current source. Do not claim a phase or gate is complete without its named verification evidence and human approval.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project
@@ -14,14 +16,18 @@ The app is fully client-rendered against the **Puter.js** platform (https://js.p
 npm install              # also runs copy-worker (copies pdf.worker.min.mjs into public/)
 npm run dev              # dev server on :5173 (react-router dev)
 npm run build            # production build (react-router build)
-npm run start            # serve build/ (react-router-serve) — production mode
+npm run start            # serve the production build with scripts/server.mjs
 npm run typecheck        # react-router typegen && tsc (no emit)
 npm run copy-worker      # copies pdf.worker.min.mjs from node_modules to public/
+npm run test              # unit and integration tests
+npm run test:security     # focused Phase 7 security/privacy/operations tests
+npm run test:e2e          # production-build browser tests
+npm run test:load         # deterministic capacity and recovery report
+npm run test:restore      # deterministic restore ownership/checksum test
+npm run verify            # formatter, lint, tests, typecheck, and build
 ```
 
 Docker: `docker build -t resume-ats . && docker run -p 3000:3000 resume-ats`
-
-There is no test runner, no linter, and no formatter configured. Don't add one unless asked.
 
 ## Architecture
 

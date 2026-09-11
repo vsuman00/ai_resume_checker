@@ -1,4 +1,16 @@
 .react-router
 build
 node_modules
+.git
+.github
+.idea
+.agent
+.vscode
+.env
+.env.*
 README.md
+graphify-out
+._*
+._.DS_Store
+**/.DS_Store
+**/._*

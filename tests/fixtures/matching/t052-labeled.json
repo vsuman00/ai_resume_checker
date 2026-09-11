@@ -1,0 +1,126 @@
+{
+  "metadata": {
+    "task": "T052",
+    "provenance": "Fully synthetic; no real-person PII",
+    "labelPolicy": "Terms are labeled at canonical taxonomy-term level. A term receives at most one coverage credit regardless of repetitions or aliases. Matches inside larger words, URLs, and email addresses are negatives.",
+    "categories": ["positive", "negative", "adversarial"]
+  },
+  "fixtures": [
+    {
+      "id": "multi-word-alias-positive",
+      "category": "positive",
+      "jobDescription": "Machine learning, Amazon Web Services, Node.js, PostgreSQL, CI/CD",
+      "resumeText": "Built ML services on AWS with NodeJS and Postgres. Automated continuous integration and delivery.",
+      "expected": {
+        "terms": ["Machine learning", "AWS", "Node.js", "PostgreSQL", "CI/CD"],
+        "matched": [
+          "Machine learning",
+          "AWS",
+          "Node.js",
+          "PostgreSQL",
+          "CI/CD"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "id": "word-boundary-negative",
+      "category": "negative",
+      "jobDescription": "Java, React",
+      "resumeText": "Built JavaScript services and reactive interfaces.",
+      "expected": {
+        "terms": ["Java", "React"],
+        "matched": [],
+        "missing": ["Java", "React"]
+      }
+    },
+    {
+      "id": "non-contiguous-phrase-negative",
+      "category": "negative",
+      "jobDescription": "machine learning, data analysis",
+      "resumeText": "Machine tooling improved learning outcomes. Data-driven reporting improved analysis quality.",
+      "expected": {
+        "terms": ["Machine learning", "Data analysis"],
+        "matched": [],
+        "missing": ["Machine learning", "Data analysis"]
+      }
+    },
+    {
+      "id": "alias-deduplication-positive",
+      "category": "positive",
+      "jobDescription": "JS, JavaScript, ECMAScript, Node.js, nodejs",
+      "resumeText": "Delivered JavaScript APIs on Node.js.",
+      "expected": {
+        "terms": ["JavaScript", "Node.js"],
+        "matched": ["JavaScript", "Node.js"],
+        "missing": []
+      }
+    },
+    {
+      "id": "punctuation-skill-positive",
+      "category": "positive",
+      "jobDescription": "C++, C sharp, dotnet",
+      "resumeText": "Skills: C++, C#, ASP.NET",
+      "expected": {
+        "terms": ["C++", "C#", ".NET"],
+        "matched": ["C++", "C#", ".NET"],
+        "missing": []
+      }
+    },
+    {
+      "id": "concatenated-stuffing-negative",
+      "category": "adversarial",
+      "jobDescription": "React, TypeScript",
+      "resumeText": "ReactReact TypeScriptTypeScript reactivate typescripted",
+      "expected": {
+        "terms": ["React", "TypeScript"],
+        "matched": [],
+        "missing": ["React", "TypeScript"]
+      }
+    },
+    {
+      "id": "generic-fallback-positive",
+      "category": "positive",
+      "jobDescription": "WebAssembly",
+      "resumeText": "Delivered a WebAssembly runtime.",
+      "expected": {
+        "terms": ["webassembly"],
+        "matched": ["webassembly"],
+        "missing": []
+      }
+    },
+    {
+      "id": "partial-coverage",
+      "category": "positive",
+      "jobDescription": "AWS, Docker, Kubernetes",
+      "resumeText": "Deployed services with Amazon Web Services and Docker.",
+      "expected": {
+        "terms": ["AWS", "Docker", "Kubernetes"],
+        "matched": ["AWS", "Docker"],
+        "missing": ["Kubernetes"]
+      }
+    },
+    {
+      "id": "url-only-adversarial-negative",
+      "category": "adversarial",
+      "jobDescription": "React",
+      "resumeText": "Reference: https://react.dev/docs",
+      "expected": {
+        "terms": ["React"],
+        "matched": [],
+        "missing": ["React"]
+      }
+    },
+    {
+      "id": "email-only-adversarial-negative",
+      "category": "adversarial",
+      "jobDescription": "Java",
+      "resumeText": "Contact java@example.com",
+      "expected": {
+        "terms": ["Java"],
+        "matched": [],
+        "missing": ["Java"]
+      }
+    }
+  ]
+}

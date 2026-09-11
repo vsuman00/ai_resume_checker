@@ -1,5 +1,7 @@
 # Resumide — Depth Gap Report (Monetization & Industry-Standard Readiness)
 
+> **Historical audit.** This report describes the earlier Puter-based architecture and is not current implementation evidence. The current architecture and remediation program are in [`ARCHITECTURE.md`](ARCHITECTURE.md), [`tasks/plan.md`](tasks/plan.md), and [`tasks/todo.md`](tasks/todo.md).
+
 *Prepared for: turning Resumide into a monetizable product — B2B (sell resume screening to companies) and B2C (help students build ATS-friendly resumes).*
 
 ---

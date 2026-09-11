@@ -1,0 +1,114 @@
+{
+  "metadata": {
+    "task": "T051",
+    "provenance": "Fully synthetic; no real-person PII",
+    "labelPolicy": "Contact values require exact raw-text matches. Section labels describe semantic headers, including headers stranded in separate columns. Warning labels are multi-column and reading-order categories."
+  },
+  "fixtures": [
+    {
+      "id": "india-international-aliases",
+      "text": "Ananya Rao\nananya.rao@example.in | +91 98765 43210 | linkedin.com/in/ananyarao\nBengaluru, Karnataka, India\n\nProfessional Profile\nPlatform engineer focused on reliable systems.\n\nWork History\nSenior Engineer\nMar 2021 – Present\n• Built a resilient payments platform.\n\nCore Competencies\nTypeScript, PostgreSQL",
+      "expected": {
+        "contact": {
+          "name": "Ananya Rao",
+          "email": "ananya.rao@example.in",
+          "phone": "+91 98765 43210",
+          "location": "Bengaluru, Karnataka, India",
+          "links": ["linkedin.com/in/ananyarao"]
+        },
+        "sections": ["summary", "experience", "skills"],
+        "warnings": []
+      }
+    },
+    {
+      "id": "france-unicode-localized-headings",
+      "text": "José Álvarez\njose.alvarez@example.fr · +33 (0)1 42 68 53 00\nParis, France\n\nProfil professionnel\nIngénieur logiciel.\n\nExpérience professionnelle\nDéveloppeur principal\nfévrier 2020 à aujourd’hui\n‣ Amélioration de la fiabilité.\n\nCompétences techniques\nTypeScript, Node.js",
+      "expected": {
+        "contact": {
+          "name": "José Álvarez",
+          "email": "jose.alvarez@example.fr",
+          "phone": "+33 (0)1 42 68 53 00",
+          "location": "Paris, France",
+          "links": []
+        },
+        "sections": ["summary", "experience", "skills"],
+        "warnings": []
+      }
+    },
+    {
+      "id": "germany-unicode-dates-and-bullets",
+      "text": "Lena Müller\nlena.mueller@example.de\n0049 30 901820\nMünchen, Deutschland\n\nBerufserfahrung\nSoftwareentwicklerin\nMärz 2019 bis Dezember 2023\n➤ Lieferte barrierefreie Anwendungen.\n\nAusbildung\nTechnische Universität\n\nKenntnisse\nTypeScript, React",
+      "expected": {
+        "contact": {
+          "name": "Lena Müller",
+          "email": "lena.mueller@example.de",
+          "phone": "0049 30 901820",
+          "location": "München, Deutschland",
+          "links": []
+        },
+        "sections": ["experience", "education", "skills"],
+        "warnings": []
+      }
+    },
+    {
+      "id": "canada-numeric-dates",
+      "text": "Renée O'Connor\nrenee.oconnor@example.ca\n(416) 555-0199\nToronto, ON, Canada\n\nCareer History\nProduct Engineer\n03/2020 - 08/2024\n- Shipped accessible account workflows.\n\nEducation and Training\nBSc Computer Science\n\nKey Skills\nReact, TypeScript",
+      "expected": {
+        "contact": {
+          "name": "Renée O'Connor",
+          "email": "renee.oconnor@example.ca",
+          "phone": "(416) 555-0199",
+          "location": "Toronto, ON, Canada",
+          "links": []
+        },
+        "sections": ["experience", "education", "skills"],
+        "warnings": []
+      }
+    },
+    {
+      "id": "uk-two-column-reading-order-risk",
+      "text": "Sam Lee\nsam.lee@example.co.uk\n+44 20 7946 0958\nLondon, United Kingdom\n\nEXPERIENCE\tSKILLS\nSoftware Engineer\tTypeScript\n2021 - Present\tReact\nEDUCATION\nBSc Computing",
+      "expected": {
+        "contact": {
+          "name": "Sam Lee",
+          "email": "sam.lee@example.co.uk",
+          "phone": "+44 20 7946 0958",
+          "location": "London, United Kingdom",
+          "links": []
+        },
+        "sections": ["experience", "skills", "education"],
+        "warnings": ["multi-column", "reading-order"]
+      }
+    },
+    {
+      "id": "contact-after-content-order-risk",
+      "text": "Experience\nAcme Corp | Backend Engineer\n2021 – Present\n- Built distributed systems.\nJordan Kim\njordan.kim@example.kr\nSeoul, South Korea\n\nSkills\nGo, PostgreSQL\n\nEducation\nBSc Computer Science",
+      "expected": {
+        "contact": {
+          "name": "Jordan Kim",
+          "email": "jordan.kim@example.kr",
+          "phone": null,
+          "location": "Seoul, South Korea",
+          "links": []
+        },
+        "sections": ["experience", "skills", "education"],
+        "warnings": ["reading-order"]
+      }
+    },
+    {
+      "id": "negative-dates-and-technologies",
+      "text": "Candidate Profile\nDelivery-focused engineer.\n\nExperience\nProject timeline: 2021 - 2024\n- Improved release safety.\n\nSkills\nReact, TypeScript\n\nEducation\nExample University",
+      "expected": {
+        "contact": {
+          "name": null,
+          "email": null,
+          "phone": null,
+          "location": null,
+          "links": []
+        },
+        "sections": ["summary", "experience", "skills", "education"],
+        "warnings": []
+      }
+    }
+  ]
+}

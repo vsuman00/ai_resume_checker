@@ -1,5 +1,7 @@
 # Resumide — Build Plan: Phases 2–4 (the rest)
 
+> **Superseded implementation plan.** Phase 1 was implemented only partially and is not enterprise-validated. Use [`ARCHITECTURE.md`](ARCHITECTURE.md), [`tasks/plan.md`](tasks/plan.md), and [`tasks/todo.md`](tasks/todo.md) as the canonical plan and status source. Preserve this file as historical rationale.
+
 *Continuation of PLAN.md. Phases 1 (the wedge: extract → parseSim → rules → parse view + heatmap) is shipped. This plan covers what comes after.*
 
 ---
