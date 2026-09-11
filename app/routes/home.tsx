@@ -32,7 +32,7 @@ interface HistoryEntry {
   analysis_results: { feedback: unknown } | null;
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, url }: Route.LoaderArgs) {
   const headers = new Headers();
   const user = await getAuthenticatedUser(
     createSupabaseServerClient(request, headers),
@@ -48,7 +48,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       { headers },
     );
 
-  const searchParams = new URL(request.url).searchParams;
+  const searchParams = url.searchParams;
   const requestedPage = Number(searchParams.get("page"));
   const page =
     Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;

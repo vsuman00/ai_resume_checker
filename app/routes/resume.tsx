@@ -66,13 +66,13 @@ function buildEvidenceReport(result: AnalysisResult): string {
   return lines.join("\n");
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
+export async function loader({ params, request, url }: Route.LoaderArgs) {
   const headers = new Headers();
   const user = await getAuthenticatedUser(
     createSupabaseServerClient(request, headers),
   );
   if (!user) {
-    const next = encodeURIComponent(new URL(request.url).pathname);
+    const next = encodeURIComponent(url.pathname);
     throw new Response(null, {
       status: 302,
       headers: { Location: `/auth?next=${next}` },

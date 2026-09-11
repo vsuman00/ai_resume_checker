@@ -3,8 +3,7 @@ import type { Route } from "./+types/auth.callback";
 import { safeReturnTo } from "~/lib/server/auth";
 import { createSupabaseServerClient } from "~/lib/server/supabase";
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const url = new URL(request.url);
+export async function loader({ request, url }: Route.LoaderArgs) {
   const code = url.searchParams.get("code");
   const responseHeaders = new Headers();
 
