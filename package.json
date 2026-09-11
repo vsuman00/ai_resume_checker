@@ -32,7 +32,7 @@
     "test:phase5:db": "supabase db query --local --file scripts/verify-phase4-db.sql",
     "test:phase7:db": "supabase db query --local --file scripts/verify-phase7-db.sql",
     "test:db": "supabase db reset --local && npm run test:phase4:db && npm run test:phase7:db && supabase db lint --local --level warning",
-    "benchmark:phase5": "node --env-file=.env node_modules/vite-node/vite-node.mjs scripts/benchmark-phase5.ts",
+    "benchmark:phase5": "node node_modules/vite-node/vite-node.mjs scripts/benchmark-phase5.ts",
     "test:live:qualitative": "node --env-file=.env node_modules/vite-node/vite-node.mjs scripts/verify-live-qualitative.ts",
     "check:live:openai-model": "node --env-file=.env node_modules/vite-node/vite-node.mjs scripts/verify-live-openai-model.ts",
     "check:live:openai-transport": "node --env-file=.env node_modules/vite-node/vite-node.mjs scripts/verify-live-openai-transport.ts",
