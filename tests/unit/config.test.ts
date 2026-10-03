@@ -23,6 +23,7 @@ describe("server configuration", () => {
     expect(config.OPENAI_BASE_URL).toBe("https://api.openai.com/v1");
     expect(config.QUALITATIVE_MAX_ATTEMPTS).toBe(1);
     expect(config.NATIVE_EVIDENCE_ENABLED).toBe(false);
+    expect(config.NATIVE_LAYOUT_ENABLED).toBe(false);
   });
 
   it("rejects provider egress outside the approved OpenAI endpoint", () => {

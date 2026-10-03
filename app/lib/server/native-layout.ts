@@ -144,6 +144,7 @@ export function normalizeNativePageLayout(
   return {
     pageId,
     pageNumber,
+    text: items.map((item) => item.str + (item.hasEOL ? "\n" : "")).join(""),
     width: viewport.width,
     height: viewport.height,
     rotation: viewport.rotation,

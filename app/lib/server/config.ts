@@ -17,6 +17,10 @@ const ServerConfigSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
+  NATIVE_LAYOUT_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
   ANALYZE_INVITE_TOKEN: z.string().default(""),
   ANALYZE_RATE_LIMIT: z.coerce.number().int().min(1).max(100).default(5),
   ANALYZE_RATE_WINDOW_SECONDS: z.coerce
@@ -123,6 +127,7 @@ export type ServerConfig = z.infer<typeof ServerConfigSchema>;
 
 const AnalysisConfigSchema = ServerConfigSchema.pick({
   NATIVE_EVIDENCE_ENABLED: true,
+  NATIVE_LAYOUT_ENABLED: true,
   AI_ENABLED: true,
   AI_MONTHLY_TOKEN_LIMIT: true,
   OPENAI_API_KEY: true,

@@ -19,6 +19,7 @@ import {
 import { createResumeStorage } from "./storage";
 import { buildNativeEvidence } from "./native-evidence";
 import { createSupabaseAdminClient } from "./supabase";
+import { NativeLayoutSchema } from "../native-layout-schema";
 
 const EXTRACTOR_VERSION = "unpdf-v1";
 
@@ -272,9 +273,12 @@ export async function processExtractionStage(
       maxPages: config.MAX_PDF_PAGES,
       maxCharacters: config.MAX_EXTRACTED_CHARACTERS,
       timeoutMs: config.EXTRACTION_TIMEOUT_MS,
+      includeLayout: config.NATIVE_LAYOUT_ENABLED,
     });
     const { data: persisted, error: persistError } = await admin.rpc(
-      "persist_analysis_extraction",
+      config.NATIVE_LAYOUT_ENABLED
+        ? "persist_native_layout_extraction"
+        : "persist_analysis_extraction",
       {
         p_analysis_id: analysisId,
         p_duration_ms: extracted.durationMs,
@@ -286,12 +290,19 @@ export async function processExtractionStage(
         p_request_id: requestId,
         p_text_checksum: extracted.textChecksum,
         p_warnings: extracted.warnings,
-        ...(config.NATIVE_EVIDENCE_ENABLED
+        ...(config.NATIVE_EVIDENCE_ENABLED || config.NATIVE_LAYOUT_ENABLED
           ? {
               p_evidence_graph:
                 extracted.extractorVersion === EXTRACTOR_VERSION
                   ? buildNativeEvidence(extracted.pageTexts)
                   : null,
+            }
+          : {}),
+        ...(config.NATIVE_LAYOUT_ENABLED
+          ? {
+              p_native_layout: extracted.nativeLayout
+                ? NativeLayoutSchema.parse(extracted.nativeLayout)
+                : null,
             }
           : {}),
       },
