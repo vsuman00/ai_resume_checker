@@ -1,13 +1,13 @@
--- Run after the local Supabase reset/seed. One statement for the CLI's
+-- Run after migrations on local or hosted Supabase. One statement for the CLI's
 -- prepared-query protocol; the nested subtransaction rolls back fixtures.
 do $$
 #variable_conflict use_variable
 declare
-  analysis_id uuid := 'dddddddd-dddd-dddd-dddd-dddddddddaa0';
-  resume_id uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10';
-  version_id uuid := 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbaa10';
-  owner_id uuid := '11111111-1111-1111-1111-111111111111';
-  organization_id uuid := '22222222-2222-2222-2222-222222222222';
+  analysis_id uuid := gen_random_uuid();
+  resume_id uuid := gen_random_uuid();
+  version_id uuid := gen_random_uuid();
+  owner_id uuid := gen_random_uuid();
+  organization_id uuid;
   graph jsonb := '{
     "schemaVersion":"native-evidence-v1", "extractorVersion":"unpdf-v1", "offsetUnit":"unicode_code_point",
     "pages":[{"id":"page-1","pageNumber":1,"text":"alex@example.test","method":"native_text","confidence":"uncalibrated"}],
@@ -23,12 +23,19 @@ declare
   saved public.analysis_extractions%rowtype;
 begin
   begin
+  -- The existing Auth trigger creates an isolated personal workspace. All
+  -- fixture rows, including this user, roll back in the subtransaction below.
+  insert into auth.users (id, aud, role, email, raw_app_meta_data, raw_user_meta_data)
+    values (owner_id, 'authenticated', 'authenticated',
+      'aa010-' || owner_id::text || '@example.test',
+      '{"provider":"email","providers":["email"]}', '{}');
+  select o.id into strict organization_id from public.organizations o where o.owner_id = owner_id;
   insert into public.resumes (id, organization_id, owner_id, display_name)
     values (resume_id, organization_id, owner_id, 'aa010-synthetic.pdf');
   insert into public.resume_versions (id, resume_id, organization_id, owner_id, storage_key, checksum, bytes, media_type)
     values (version_id, resume_id, organization_id, owner_id, 'aa010/synthetic.pdf', repeat('a', 64), 1024, 'application/pdf');
   insert into public.analyses (id, resume_version_id, organization_id, owner_id, status, idempotency_key)
-    values (analysis_id, version_id, organization_id, owner_id, 'extracting', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeaa0');
+    values (analysis_id, version_id, organization_id, owner_id, 'extracting', gen_random_uuid());
 
   -- Tampered assertion must fail before either the extraction or transition.
   bad_graph := jsonb_set(graph, '{assertions,1,value}', '"fabricated@example.test"');
