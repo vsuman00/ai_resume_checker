@@ -14,7 +14,7 @@ function toUint8Array(pdf: Buffer | Uint8Array): Uint8Array {
 }
 
 export type ResumeExtractionErrorCode =
-  "INVALID_PDF" | "PAGE_LIMIT" | "EMPTY_TEXT" | "TEXT_LIMIT";
+  "INVALID_PDF" | "PAGE_LIMIT" | "EMPTY_TEXT" | "TEXT_LIMIT" | "LAYOUT_LIMIT";
 
 export class ResumeExtractionError extends Error {
   readonly code: ResumeExtractionErrorCode;

@@ -68,6 +68,7 @@ export async function extractPdfForAnalysis(
     maxPages: number;
     maxCharacters: number;
     timeoutMs: number;
+    includeLayout?: boolean;
   },
   extractor: PdfLayerExtractor = extractPdfTextLayers,
   ocrRuntime: OcrRuntime = DEFAULT_OCR_RUNTIME,
@@ -83,6 +84,7 @@ export async function extractPdfForAnalysis(
       extractor(args.bytes, {
         maxPages: args.maxPages,
         maxCharacters: args.maxCharacters,
+        includeLayout: args.includeLayout,
       }),
       new Promise<never>((_, reject) => {
         timeout = setTimeout(
@@ -148,6 +150,10 @@ async function resolveExtraction(
     warnings,
     durationMs: Math.round(performance.now() - startedAt),
     extractorVersion,
+    // OCR replaces the source text, so native offsets must not be attached to it.
+    ...(extractorVersion === EXTRACTOR_VERSION && extracted.nativeLayout
+      ? { nativeLayout: extracted.nativeLayout }
+      : {}),
   };
 }
 

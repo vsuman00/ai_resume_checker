@@ -1,7 +1,12 @@
 import { extractText, getDocumentProxy } from "unpdf";
 import { ResumeExtractionError } from "../extract";
+import {
+  normalizeNativePageLayout,
+  type NativePageLayout,
+} from "../native-layout";
 
 export const MIN_USABLE_TEXT_CHARACTERS_PER_PAGE = 8;
+export const MAX_NATIVE_LAYOUT_ITEMS_PER_PAGE = 10_000;
 
 export type PdfDocumentType = "scanned" | "mixed" | "text";
 
@@ -9,6 +14,10 @@ export type PdfTextExtraction = {
   totalPages: number;
   text: string;
   pageTexts: string[];
+  nativeLayout?: {
+    schemaVersion: "native-layout-v1";
+    pages: NativePageLayout[];
+  };
 };
 
 export type PdfTextProfile = {
@@ -64,7 +73,7 @@ export function textLayerWarning(profile: PdfTextProfile): string | null {
 
 export async function extractPdfTextLayers(
   pdf: Uint8Array,
-  limits: { maxPages: number; maxCharacters: number },
+  limits: { maxPages: number; maxCharacters: number; includeLayout?: boolean },
 ): Promise<PdfTextExtraction> {
   let document;
   try {
@@ -73,11 +82,46 @@ export async function extractPdfTextLayers(
     throw new ResumeExtractionError("INVALID_PDF");
   }
 
-  if (document.numPages > limits.maxPages) {
-    throw new ResumeExtractionError("PAGE_LIMIT");
-  }
-
   try {
+    if (document.numPages > limits.maxPages) {
+      throw new ResumeExtractionError("PAGE_LIMIT");
+    }
+    if (limits.includeLayout) {
+      const pageTexts: string[] = [];
+      const pages: NativePageLayout[] = [];
+      let characters = 0;
+      // One bounded sequential pass keeps text and layout source offsets equal.
+      for (let number = 1; number <= document.numPages; number++) {
+        const page = await document.getPage(number);
+        const content = await page.getTextContent();
+        if (content.items.length > MAX_NATIVE_LAYOUT_ITEMS_PER_PAGE) {
+          throw new ResumeExtractionError("LAYOUT_LIMIT");
+        }
+        const items = content.items.filter((item) => "str" in item);
+        const text = items
+          .map((item) => item.str + (item.hasEOL ? "\n" : ""))
+          .join("");
+        characters += text.length + (number > 1 ? 2 : 0);
+        if (characters > limits.maxCharacters)
+          throw new ResumeExtractionError("TEXT_LIMIT");
+        pageTexts.push(text);
+        pages.push(
+          normalizeNativePageLayout(
+            number,
+            page.getViewport({ scale: 1 }),
+            items,
+            content.styles,
+          ),
+        );
+        page.cleanup();
+      }
+      return {
+        totalPages: document.numPages,
+        text: pageTexts.join("\n\n"),
+        pageTexts,
+        nativeLayout: { schemaVersion: "native-layout-v1", pages },
+      };
+    }
     const extracted = await extractText(document, { mergePages: false });
     const pageTexts = extracted.text;
     const text = pageTexts.join("\n\n");
@@ -88,5 +132,7 @@ export async function extractPdfTextLayers(
   } catch (error) {
     if (error instanceof ResumeExtractionError) throw error;
     throw new ResumeExtractionError("INVALID_PDF");
+  } finally {
+    await document.destroy();
   }
 }

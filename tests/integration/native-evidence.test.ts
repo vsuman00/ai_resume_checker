@@ -3,13 +3,14 @@ import { extractPdfForAnalysis } from "../../app/lib/server/extraction-stage";
 import { buildNativeEvidence } from "../../app/lib/server/native-evidence";
 
 // Minimal synthetic PDF, generated in-memory with explicit object offsets.
-function syntheticPdf() {
-  const stream =
-    "BT /F1 12 Tf 50 750 Td (Alex Example) Tj 0 -20 Td (alex@example.test) Tj 0 -20 Td (+1 202 555 0100) Tj ET";
+function syntheticPdf(
+  stream = "BT /F1 12 Tf 50 750 Td (Alex Example) Tj 0 -20 Td (alex@example.test) Tj 0 -20 Td (+1 202 555 0100) Tj ET",
+  rotation = 0,
+) {
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Rotate ${rotation} /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>`,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
   ];
@@ -84,5 +85,96 @@ describe("native PDF evidence", () => {
         evidence: null,
       });
     }
+  });
+});
+
+describe("native PDF layout extraction", () => {
+  const limits = {
+    maxBytes: 10_000,
+    maxPages: 2,
+    maxCharacters: 10_000,
+    timeoutMs: 5_000,
+    includeLayout: true,
+  };
+
+  it("preserves legacy text and reconstructs real single-column text runs", async () => {
+    const extracted = await extractPdfForAnalysis({
+      ...limits,
+      bytes: syntheticPdf(),
+    });
+    const legacy = await extractPdfForAnalysis({
+      ...limits,
+      bytes: syntheticPdf(),
+      includeLayout: false,
+    });
+    expect(extracted.pageTexts).toEqual(legacy.pageTexts);
+    expect(legacy).not.toHaveProperty("nativeLayout");
+    const page = extracted.nativeLayout!.pages[0];
+    expect(page).toMatchObject({
+      pageId: "page-1",
+      width: 612,
+      height: 792,
+      rotation: 0,
+      warnings: [],
+      state: "uncalibrated",
+    });
+    for (const block of page.blocks) {
+      expect(
+        Array.from(extracted.pageTexts[0])
+          .slice(block.start, block.end)
+          .join(""),
+      ).toBe(block.text);
+      if (!block.text.trim()) continue;
+      expect(block.box?.x).toBeGreaterThanOrEqual(0);
+      expect(block.box?.y).toBeGreaterThanOrEqual(0);
+      expect(block.box?.width).toBeGreaterThan(0);
+      expect(block.box?.height).toBeGreaterThan(0);
+    }
+  });
+
+  it("flags real multi-column ambiguity without silently rewriting source text", async () => {
+    const bytes = syntheticPdf(
+      "BT /F1 12 Tf 350 750 Td (Right column) Tj -300 0 Td (Left column) Tj ET",
+    );
+    const extracted = await extractPdfForAnalysis({ ...limits, bytes });
+    const legacy = await extractPdfForAnalysis({
+      ...limits,
+      bytes,
+      includeLayout: false,
+    });
+    expect(extracted.text).toBe(legacy.text);
+    const page = extracted.nativeLayout!.pages[0];
+    expect(page.warnings).toContain("ambiguous_columns_or_table");
+    expect(page.state).toBe("review_required");
+    expect(
+      page.blocks
+        .filter((block) => block.text.trim())
+        .map((block) => block.text),
+    ).toEqual(["Right column", "Left column"]);
+  });
+
+  it("normalizes rotated page coordinates while warning about reading direction", async () => {
+    const extracted = await extractPdfForAnalysis({
+      ...limits,
+      bytes: syntheticPdf(undefined, 90),
+    });
+    const page = extracted.nativeLayout!.pages[0];
+    expect(page).toMatchObject({ width: 792, height: 612, rotation: 90 });
+    expect(page.warnings).toContain("unsupported_reading_direction");
+    expect(page.blocks[0].box?.x).toBeGreaterThan(0.9);
+    expect(page.blocks[0].box?.y).toBeCloseTo(50 / 612);
+  });
+
+  it("enforces existing page and character bounds on the opt-in path", async () => {
+    await expect(
+      extractPdfForAnalysis({ ...limits, bytes: syntheticPdf(), maxPages: 0 }),
+    ).rejects.toMatchObject({ code: "PAGE_LIMIT" });
+    await expect(
+      extractPdfForAnalysis({
+        ...limits,
+        bytes: syntheticPdf(),
+        maxCharacters: 4,
+      }),
+    ).rejects.toMatchObject({ code: "TEXT_LIMIT" });
   });
 });

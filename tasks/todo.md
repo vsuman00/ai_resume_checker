@@ -721,6 +721,12 @@ These tasks supplement, rather than retroactively upgrade, the synthetic A3 evid
 - [ ] Normalize page coordinates, word/line blocks, columns, tables, and reading-order warnings for supported native PDFs.
 - **Verify:** single- and multi-column fixtures meet the reading-order gate and Parse View exposes page-linked evidence accessibly.
 
+**First slice (2026-10-03; PARTIAL):** `extractPdfForAnalysis({ includeLayout: true, ... })` returns opt-in `native-layout-v1` pages with rendered viewport dimensions, normalized top-left approximate font-em text-run boxes, stable page/run IDs, Unicode code-point source offsets, and original PDF source order. Text is unchanged from the legacy extractor. Rotated/unsupported directions, invalid or out-of-page geometry, reversed vertical source order, and separated same-row runs produce explicit review warnings; column/table ambiguity is never silently reordered. The layout pass is sequential, keeps existing byte/page/character/time bounds, caps text items per page, and releases the PDF document. OCR replacement text never inherits native offsets. The worker does not opt in yet, and no new layout data is written to hosted Supabase or exposed to browsers.
+
+**Remaining:** verified layout persistence/read-model validation, word/line grouping, calibrated column/table handling and reading-order gate, accessible page-linked Parse View, and owner-isolation/UI verification. AA011 remains unchecked; approximate text-run geometry is not word/glyph truth or calibrated extraction validity.
+
+**First-slice verification:** Real generated single-column, multi-column, and rotated PDFs preserve legacy text and reconstruct text-run offsets. Unit tests cover Unicode offsets, unavailable/out-of-page geometry, reading-direction and source-order warnings, item/page limits, and document cleanup on success/rejection. Full local `npm run verify:ci` passes (206 tests at that run, all 44 browser tests, Phase 5 benchmark, build/types/lint, supply-chain/security checks, load/restore); three subsequently added resource-bound tests also pass. No production feature flag, scoring policy, or Supabase schema was changed for this opt-in foundation.
+
 #### AA012: Implement selective OCR adapter slice
 
 **Dependencies:** AA004, AA010; **Likely files:** document adapter interface, selected adapter, fixtures, tests; **Scope:** M
