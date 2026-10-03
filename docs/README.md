@@ -31,6 +31,7 @@ The [`decisions/`](decisions/) directory contains the ADRs that record durable a
 - [`design/README.md`](design/README.md): current design system and experience principles.
 - [`design/COMPETITIVE_UX_RESEARCH.md`](design/COMPETITIVE_UX_RESEARCH.md): category research and design implications.
 - [`design/PRODUCT_DESIGN_BLUEPRINT.md`](design/PRODUCT_DESIGN_BLUEPRINT.md): page structure, interaction rules, and design verification boundary.
+- [`design/NATIVE_LAYOUT_EVIDENCE.md`](design/NATIVE_LAYOUT_EVIDENCE.md): AA011 native geometry, supported reading-order hypotheses, table review, and pinned fixture gate.
 
 ### Operations and security
 

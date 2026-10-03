@@ -1,5 +1,6 @@
 import { layoutTextGroups, type LayoutPage } from "~/lib/native-layout-schema";
 import { useMemo, useState } from "react";
+import NativeStructureEvidence from "./NativeStructureEvidence";
 
 const warningText: Record<string, string> = {
   invalid_geometry: "Some text has no usable geometry.",
@@ -50,6 +51,11 @@ export default function NativeLayoutEvidence({
           ))}
         </ul>
       )}
+      <NativeStructureEvidence
+        page={page}
+        selectedRun={selectedRun}
+        onSelectRun={onSelectRun}
+      />
       <details>
         <summary>Source text runs ({page.blocks.length})</summary>
         <ol>

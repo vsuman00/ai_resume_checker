@@ -80,6 +80,7 @@ test("owner can review persisted layout by keyboard; other users cannot read it"
     const bytes = syntheticPdf([
       CONTACT_PDF_STREAM,
       "BT /F1 12 Tf 350 750 Td (Right column) Tj -300 0 Td (Left column) Tj ET",
+      "BT /F1 12 Tf 50 750 Td (Skill) Tj 300 0 Td (Level) Tj -300 -20 Td (TypeScript) Tj 300 0 Td (Advanced) Tj -300 -20 Td (SQL) Tj 300 0 Td (Intermediate) Tj ET",
     ]);
     storageKey = `organizations/${organizationId}/resumes/${resumeId}/${versionId}.pdf`;
     check(
@@ -132,7 +133,7 @@ test("owner can review persisted layout by keyboard; other users cannot read it"
     const extracted = await extractPdfForAnalysis({
       bytes,
       maxBytes: 20_000,
-      maxPages: 2,
+      maxPages: 3,
       maxCharacters: 10_000,
       timeoutMs: 5_000,
       includeLayout: true,
@@ -142,7 +143,7 @@ test("owner can review persisted layout by keyboard; other users cannot read it"
       p_duration_ms: extracted.durationMs,
       p_extracted_text: extracted.text,
       p_extractor_version: extracted.extractorVersion,
-      p_page_count: 2,
+      p_page_count: 3,
       p_page_texts: extracted.pageTexts,
       p_process_id: "aa011-browser",
       p_request_id: randomUUID(),
@@ -162,7 +163,7 @@ test("owner can review persisted layout by keyboard; other users cannot read it"
       })),
     };
     const parseView = {
-      totalPages: 2,
+      totalPages: 3,
       totalLines: 6,
       contact: {
         name: "Alex Example",
@@ -265,6 +266,18 @@ test("owner can review persisted layout by keyboard; other users cannot read it"
     await expect(page.getByRole("status")).toContainText(
       "Page 1, source run 1",
     );
+    await page
+      .getByText("Geometric lines, columns and table candidates", {
+        exact: true,
+      })
+      .click();
+    const visualSource = page.getByRole("button", {
+      name: "Show visual line source page-1-run-1",
+      exact: true,
+    });
+    await visualSource.focus();
+    await page.keyboard.press("Enter");
+    await expect(visualSource).toHaveAttribute("aria-pressed", "true");
     for (const width of [320, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 1000 });
       expect(
@@ -292,6 +305,45 @@ test("owner can review persisted layout by keyboard; other users cannot read it"
     await expect(
       page.getByText(/Separated text may be columns or table cells/),
     ).toBeVisible();
+    await page
+      .getByText("Geometric lines, columns and table candidates", {
+        exact: true,
+      })
+      .click();
+    const ordered = page.getByRole("list", {
+      name: "Inferred visual reading order",
+    });
+    await expect(ordered.locator("li > p:first-child")).toHaveText([
+      "Left column",
+      "Right column",
+    ]);
+    await page.getByRole("combobox", { name: "Parse page" }).selectOption("3");
+    await page
+      .getByText("Geometric lines, columns and table candidates", {
+        exact: true,
+      })
+      .click();
+    await expect(
+      page.getByText(/Table or columns: manual review required/),
+    ).toBeVisible();
+    await page
+      .getByText("page-3-table-1: 3 candidate rows", { exact: true })
+      .click();
+    await expect(
+      page.getByRole("list", { name: "Candidate table rows" }).locator("li"),
+    ).toHaveText([
+      "Skill | Level",
+      "TypeScript | Advanced",
+      "SQL | Intermediate",
+    ]);
+    const tableA11y = await new AxeBuilder({ page })
+      .include(".parse-view")
+      .analyze();
+    expect(
+      tableA11y.violations.filter(({ impact }) =>
+        ["serious", "critical"].includes(impact ?? ""),
+      ),
+    ).toEqual([]);
     await page.screenshot({
       path: "test-results/native-layout-review.png",
       fullPage: true,

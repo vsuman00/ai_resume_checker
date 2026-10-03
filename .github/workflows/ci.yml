@@ -19,6 +19,7 @@ jobs:
       - run: npm run check:alerts
       - run: npm run check:container
       - run: npm run format:check
+      - run: npm run format:check:native-layout
       - run: npm run lint
       - run: npm run test
       - run: npm run test:load
