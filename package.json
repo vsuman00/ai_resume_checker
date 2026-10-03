@@ -5,7 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "lint": "eslint app/routes app/lib/server app/lib/native-layout-schema.ts tests e2e app/components",
+    "lint": "eslint app/routes app/lib/server app/lib/native-layout-schema.ts app/lib/native-layout-structure.ts tests e2e app/components",
     "format:check": "prettier --check eslint.config.js vitest.config.ts playwright.config.ts e2e tests app/routes/healthz.ts app/routes/readyz.ts app/routes/upload.tsx app/routes/resume.tsx app/routes/api.analyze.ts app/routes/api.telemetry.ts app/routes/api.privacy-export.ts app/routes/metrics.ts app/routes.ts app/root.tsx app/lib/server app/components/FileUploader.tsx app/components/TelemetryReporter.tsx scripts/validate-config.ts scripts/selfcheck-config.ts scripts/selfcheck-errors.ts scripts/selfcheck-upload.mjs scripts/server.mjs scripts/load-test.ts scripts/verify-restore.ts scripts/run-privacy-worker.ts scripts/run-retention.ts scripts/validate-alerts.mjs scripts/check-container.mjs docs/operations/ALERTS.json",
     "format": "prettier --write eslint.config.js vitest.config.ts playwright.config.ts e2e tests app/routes/healthz.ts app/routes/readyz.ts app/routes/upload.tsx app/routes/resume.tsx app/routes/api.analyze.ts app/routes/api.telemetry.ts app/routes/api.privacy-export.ts app/routes/metrics.ts app/routes.ts app/root.tsx app/lib/server app/components/FileUploader.tsx app/components/TelemetryReporter.tsx scripts/validate-config.ts scripts/selfcheck-config.ts scripts/selfcheck-errors.ts scripts/selfcheck-upload.mjs scripts/server.mjs scripts/load-test.ts scripts/verify-restore.ts scripts/run-privacy-worker.ts scripts/run-retention.ts scripts/validate-alerts.mjs scripts/check-container.mjs docs/operations/ALERTS.json",
     "test": "vitest run",
@@ -35,6 +35,7 @@
     "test:aa011:db": "supabase db query --local --file scripts/verify-native-evidence.sql",
     "test:db": "supabase db reset --local && npm run test:phase4:db && npm run test:phase7:db && npm run test:aa010:db && supabase db lint --local --level warning",
     "benchmark:phase5": "node node_modules/vite-node/vite-node.mjs scripts/benchmark-phase5.ts",
+    "benchmark:native-layout": "vitest run tests/integration/native-reading-order.test.ts",
     "test:live:qualitative": "node --env-file=.env node_modules/vite-node/vite-node.mjs scripts/verify-live-qualitative.ts",
     "check:live:openai-model": "node --env-file=.env node_modules/vite-node/vite-node.mjs scripts/verify-live-openai-model.ts",
     "check:live:openai-transport": "node --env-file=.env node_modules/vite-node/vite-node.mjs scripts/verify-live-openai-transport.ts",

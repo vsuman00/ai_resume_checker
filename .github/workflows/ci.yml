@@ -24,6 +24,7 @@ jobs:
       - run: npm run test:load
       - run: npm run test:restore
       - run: npm run benchmark:phase5
+      - run: npm run benchmark:native-layout
       - run: npm run typecheck
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=high
