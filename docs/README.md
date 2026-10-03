@@ -6,8 +6,10 @@ This directory contains the maintained design, decision, security, and operation
 
 - [`../README.md`](../README.md): product overview, local setup, commands, and current capability boundary.
 - [`../ARCHITECTURE.md`](../ARCHITECTURE.md): canonical architecture, invariants, and gate definitions.
+- [`../CONSTRAINTS.md`](../CONSTRAINTS.md): non-negotiable quality floors and Accuracy-v2 evidence gates.
 - [`../tasks/plan.md`](../tasks/plan.md): gated implementation sequence.
 - [`../tasks/todo.md`](../tasks/todo.md): executable task list and verification evidence.
+- [`../tasks/accuracy-authoring-plan.md`](../tasks/accuracy-authoring-plan.md): research-to-pilot subplan for evidence-based scoring, editing, and verified artifacts.
 - [`../CLAUDE.md`](../CLAUDE.md): concise instructions for implementation agents.
 
 ## Maintained documentation
@@ -15,6 +17,14 @@ This directory contains the maintained design, decision, security, and operation
 ### Decisions
 
 The [`decisions/`](decisions/) directory contains the ADRs that record durable architectural choices and their trade-offs.
+
+- [`decisions/0006-evidence-gated-multidimensional-scoring.md`](decisions/0006-evidence-gated-multidimensional-scoring.md): approved architectural direction for separate evidence confidence, ATS compatibility, and job alignment; calibration and release semantics remain open.
+- [`decisions/0007-canonical-resume-and-verified-rendering.md`](decisions/0007-canonical-resume-and-verified-rendering.md): approved direction for canonical content, immutable versions, renderer adapters, and parse-back verification; detailed contracts and artifact gates remain open.
+
+### Scoring and authoring research
+
+- [`ATS_SCORING_AND_AUTHORING_RESEARCH.md`](ATS_SCORING_AND_AUTHORING_RESEARCH.md): first-party vendor evidence, occupational-taxonomy research, OCR/layout evidence, market comparison, and governance findings.
+- [`ATS_SCORING_AND_AUTHORING_SPEC.md`](ATS_SCORING_AND_AUTHORING_SPEC.md): architectural direction and detailed product, evidence, scoring, authoring, rendering, and evaluation contracts with explicit open decisions.
 
 ### Design
 

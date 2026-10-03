@@ -17,6 +17,7 @@ import {
   type PdfTextExtraction,
 } from "./ocr/pdf-detection";
 import { createResumeStorage } from "./storage";
+import { buildNativeEvidence } from "./native-evidence";
 import { createSupabaseAdminClient } from "./supabase";
 
 const EXTRACTOR_VERSION = "unpdf-v1";
@@ -279,6 +280,14 @@ export async function processExtractionStage(
         p_request_id: requestId,
         p_text_checksum: extracted.textChecksum,
         p_warnings: extracted.warnings,
+        ...(config.NATIVE_EVIDENCE_ENABLED
+          ? {
+              p_evidence_graph:
+                extracted.extractorVersion === EXTRACTOR_VERSION
+                  ? buildNativeEvidence(extracted.pageTexts)
+                  : null,
+            }
+          : {}),
       },
     );
     if (persistError || persisted !== true) {

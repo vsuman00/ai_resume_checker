@@ -1,7 +1,8 @@
 # Resumide Enterprise Implementation Tasks
 
-Status: **PARTIAL; CANDIDATE B2C AND SUPABASE CHOICES RECORDED, GATE A0 REMAINS OPEN**
+Status: **PARTIAL; CANDIDATE B2C BASELINE IMPLEMENTED; ACCURACY-V2 DIRECTION APPROVED; AA010 IMPLEMENTED; CONCRETE AA0 DECISIONS AND A0/A4 OPEN**
 Plan: [`plan.md`](plan.md)
+Accuracy-v2 subplan: [`accuracy-authoring-plan.md`](accuracy-authoring-plan.md)
 Architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
 
 ## Task rules
@@ -20,6 +21,7 @@ Architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
 - OCR is disabled behind an adapter. The workspace owner holds product, privacy/security, scoring, cost, operations, and release ownership until delegated.
 - Deferred: enterprise administration, enterprise roles, and employer workflows. Do not create an admin surface in the active build.
 - Still unresolved: maximum job duration/retry/dead-letter policy, scoring weights/skipped-rule/claim-language approval, and the B2C payment/entitlement model.
+- Accuracy-v2 architectural direction and AA010 were approved on 2026-10-03. The first domain/locale, detailed corpus governance, OCR bake-off, calibrated score policy, and release-format acceptance remain open AA0 decisions.
 - The hosted Resumide Supabase project is active; initial migration, RLS, private bucket, and advisory checks passed through Supabase MCP.
 
 ## Phase 0: Architecture approval and documentation control
@@ -638,6 +640,509 @@ telemetry are implemented with redaction and low-cardinality route labels.
 - [ ] Security/privacy review, restore drill, SLO dashboards, staging E2E, rollback rehearsal, and policy approval are attached.
 - [ ] Human approves Gate A4.
 
+## Phase 7A: Accuracy-v2, authoring, and verified artifacts [DIRECTION APPROVED; AA010 IMPLEMENTED]
+
+### Approval record — 2026-10-03
+
+The workspace owner approved the proposed Accuracy-v2 architecture and the recommended first implementation slice with “I approve.” This authorizes AA010 native-PDF evidence storage and the architectural direction in ADR-0006/0007. It does not resolve the unnamed first release domain/locale, approve scoring weights, select an OCR provider, authorize real-data collection, or close production Gate A4. AA000-AA005 retain unchecked acceptance items where concrete decisions or contracts are still missing. Implementation may proceed on the approved native-PDF foundation; dependent provider, calibration, corpus, and release work waits for those decisions.
+
+These tasks supplement, rather than retroactively upgrade, the synthetic A3 evidence.
+
+### Phase AA0: Truth contract and evaluation design
+
+#### AA000: Approve capability map, non-goals, and claim ladder
+
+**Dependencies:** A2; **Likely files:** `ARCHITECTURE.md`, Accuracy-v2 spec/subplan; **Scope:** S
+
+- [ ] Product, scoring, privacy, and evaluation owners approve capability boundaries and the five claim levels.
+- **Verify:** dated approval names allowed product language and explicitly prohibits employer-probability, universal-ATS, and automatic-hiring claims.
+
+#### AA001: Approve score semantics and legacy treatment
+
+**Dependencies:** AA000; **Likely files:** ADR-0006, Accuracy-v2 spec, migration/UX decision note; **Scope:** S
+
+- [ ] Approve score names, dimensions, weights-as-hypotheses, unknown/not-evaluated behavior, evidence gates, and treatment of historical scores.
+- **Verify:** worked examples prove no skipped rule receives free points and no LLM output is authoritative numeric input.
+
+#### AA002: Freeze Accuracy-v2 contracts
+
+**Dependencies:** AA001; **Likely files:** Accuracy-v2 spec, schema/API contract docs, ADR-0007; **Scope:** M
+
+- [ ] Freeze versioned evidence, canonical resume, requirement, score, suggestion, and artifact state contracts.
+- **Verify:** contract review covers IDs, provenance, confidence, versioning, authorization, retention, and failure/unknown states.
+
+#### AA003: Approve corpus and annotation governance
+
+**Dependencies:** AA000; **Likely files:** `CONSTRAINTS.md`, evaluation plan, annotation handbook, privacy data map; **Scope:** M
+
+- [ ] Approve provenance, consent/de-identification, retention, two-annotator/adjudication process, partitions, segment taxonomy, and statistical reporting.
+- **Verify:** privacy owner approves access/deletion controls; evaluation owner approves agreement and confidence-interval method before data collection.
+
+#### AA004: Approve document/OCR provider bake-off
+
+**Dependencies:** AA002, AA003; **Likely files:** provider evaluation protocol, security/privacy review, cost ceiling; **Scope:** S
+
+- [ ] Approve representative fixtures, normalized output contract, accuracy/latency/cost/privacy measures, regions, failure policy, and exit boundary.
+- **Verify:** protocol can compare native extraction and candidate providers without binding production to a vendor.
+
+#### AA005: Approve first release segment
+
+**Dependencies:** AA001-AA004; **Likely files:** release-scope decision, domain/locale matrix, template matrix; **Scope:** S
+
+- [ ] Select one occupation/domain, locale/language, input mix, and initial PDF/DOCX formats; LaTeX stays later.
+- **Verify:** unsupported domains/locales/formats have explicit UI behavior and no generalized claim.
+
+#### Gate AA0: Accuracy-v2 architecture approval
+
+- [ ] Human owners approve AA000-AA005 and change ADR-0006/0007 status only through recorded decisions.
+- [ ] Initial weights remain hypotheses until calibration; documentation creation alone does not pass this gate.
+
+### Phase AA1: Document evidence
+
+#### AA010: Persist one native-PDF evidence graph
+
+**Dependencies:** AA0; **Likely files:** evidence schema/migration, extraction service, fixture, tests; **Scope:** M
+
+- [x] Persist pages, text spans, source method, confidence, and critical contact-field assertions for one native-text PDF.
+- **Verify:** deterministic integration test reconstructs every assertion from page/span evidence and enforces owner isolation.
+
+**Implementation (2026-10-03):** AA010 stores `native-evidence-v1` in the existing private extraction row, with Unicode code-point offsets and source references for name/email/phone candidates. All candidates are `review_required` with `uncalibrated` confidence; this is not calibrated extraction validity. Other critical fields await later structured-evidence slices. Privacy export includes the new column through its existing owner-filtered read, and deletion inherits the analysis cascade. `NATIVE_EVIDENCE_ENABLED` defaults to false until migration and full Supabase verification pass. Deploy migration `20261003100000_native_evidence_graph.sql` first, run `npm run test:aa010:db`, then opt the worker in. Disabling the flag restores the older RPC call.
+
+**Evidence:** Real synthetic-PDF reconstruction, Unicode offsets, and absent-field tests pass. The migration/SQL verifier passes in an isolated PostgreSQL runtime (PGlite), including fabricated assertion rejection, atomic transition, ownership derivation, retry protection, and denied client-role privileges. Full local Supabase/PostgREST and hosted verification remain pending because Docker's API was unresponsive; AA010 is implemented with partial database validation, not a closed AA1 gate.
+
+**Regression verification:** 48 Vitest files / 197 tests, formatting, lint, typecheck, production build, registry signatures, secret/alert/container checks, synthetic load/restore, and Phase 5 benchmark pass. `npm run verify:ci` reaches Playwright with 43 passing tests and one failure: `/readyz` returns 503 while the database environment is unavailable. The complete local CI gate is therefore pending infrastructure recovery; no assertion or benchmark threshold was relaxed.
+
+#### AA011: Add geometry and reading-order evidence
+
+**Dependencies:** AA010; **Likely files:** layout normalizer, Parse View, API read model, tests; **Scope:** M
+
+- [ ] Normalize page coordinates, word/line blocks, columns, tables, and reading-order warnings for supported native PDFs.
+- **Verify:** single- and multi-column fixtures meet the reading-order gate and Parse View exposes page-linked evidence accessibly.
+
+#### AA012: Implement selective OCR adapter slice
+
+**Dependencies:** AA004, AA010; **Likely files:** document adapter interface, selected adapter, fixtures, tests; **Scope:** M
+
+- [ ] Detect scanned/mixed pages and invoke OCR only where policy requires it; normalize text, geometry, confidence, and provider metadata.
+- **Verify:** one scanned and one mixed fixture pass adapter-contract, timeout, retry, cost-accounting, and safe-failure tests.
+
+#### AA013: Reconcile native and OCR evidence
+
+**Dependencies:** AA011, AA012; **Likely files:** reconciliation service, confidence policy, tests, UI state; **Scope:** M
+
+- [ ] Preserve disagreements, calibrate confidence, and mark critical conflicts `review_required` rather than selecting silently.
+- **Verify:** disagreement and low-confidence fixtures never reach a misleading authoritative score.
+
+#### AA014: Add candidate evidence correction
+
+**Dependencies:** AA013; **Likely files:** correction API/service, evidence UI, audit event, tests; **Scope:** M
+
+- [ ] Candidate can confirm or correct uncertain critical fields while original evidence remains immutable and auditable.
+- **Verify:** authorization, concurrent correction, validation, audit, deletion/export, keyboard, and screen-reader tests pass.
+
+#### AA015: Build extraction-v2 benchmark
+
+**Dependencies:** AA010-AA014; **Likely files:** benchmark harness, locked manifest, report template, CI gate; **Scope:** M
+
+- [ ] Report native/OCR character accuracy, field precision/recall, page coverage, reading order, failure, latency, and cost per segment and provider.
+- **Verify:** locked evaluation is reproducible, confidence intervals are present, and any required-segment failure blocks AA1.
+
+#### Gate AA1: Evidence-safe extraction
+
+- [ ] `CONSTRAINTS.md` extraction floors pass on every approved segment; unsafe evidence reaches review/unsupported state, not numeric scoring.
+
+### Phase AA2: Canonical resume and immutable versions
+
+#### AA020: Add canonical resume persistence
+
+**Dependencies:** AA1, ADR-0007 approval; **Likely files:** migration, repository, recovery notes, tests; **Scope:** M
+
+- [ ] Add tenant-scoped canonical resume, immutable version, fact provenance, and deletion/export semantics.
+- **Verify:** migration forward/recovery, RLS/authorization, transaction, orphan, retention, and restore tests pass.
+
+#### AA021: Map verified evidence into canonical content
+
+**Dependencies:** AA020; **Likely files:** importer, canonical schema, fixtures, tests; **Scope:** M
+
+- [ ] Map contacts, sections, entries, roles, dates, bullets, skills, and source evidence without template coupling.
+- **Verify:** native/OCR/import fixtures retain content, order, confidence, and provenance; unresolved values remain explicit.
+
+#### AA022: Add version lineage and concurrency
+
+**Dependencies:** AA021; **Likely files:** version service, change-event schema, API, tests; **Scope:** M
+
+- [ ] Edits create child versions with optimistic concurrency and append-only change events; rollback creates a new version.
+- **Verify:** concurrent edit, retry/idempotency, lineage, compare, rollback, and audit tests pass.
+
+#### AA023: Enforce fact verification
+
+**Dependencies:** AA022; **Likely files:** fact ledger, validation policy, API, tests; **Scope:** M
+
+- [ ] Every factual value is sourced, candidate-confirmed, or explicitly unsupported; unsupported generated facts cannot be accepted.
+- **Verify:** adversarial insert/strengthen/date/metric tests record zero unsupported accepted facts.
+
+#### AA024: Add structured resume read and compare models
+
+**Dependencies:** AA022, AA023; **Likely files:** query service, routes, response contract, tests; **Scope:** M
+
+- [ ] Authorized clients can load a structured version and compare two lineage-related versions with provenance states.
+- **Verify:** 403/404 isolation, pagination/size, deletion, stale version, and deterministic diff tests pass.
+
+#### Gate AA2: Canonical content integrity
+
+- [ ] Import, correction, concurrency, lineage, deletion/export, authorization, audit, and unsupported-fact tests pass.
+
+### Phase AA3: Job intelligence and domain packs
+
+#### AA030: Persist evidence-linked job requirements
+
+**Dependencies:** AA0; **Likely files:** requirement schema/migration, repository, tests; **Scope:** M
+
+- [ ] Persist typed requirements, importance state, exact JD spans, provenance, confidence, and version metadata.
+- **Verify:** schema/repository tests cover duplicate spans, authorization, empty/contradictory requirements, export, and deletion.
+
+#### AA031: Parse explicit deterministic requirements
+
+**Dependencies:** AA030; **Likely files:** deterministic parser, normalizer, fixtures, tests; **Scope:** M
+
+- [ ] Parse explicit years, education, certification, location, work authorization, required/preferred cues, and negation without model inference.
+- **Verify:** adversarial and international fixtures report per-type precision/recall and preserve exact evidence.
+
+#### AA032: Add bounded model-proposed structure
+
+**Dependencies:** AA031; **Likely files:** model adapter, structured schema, validator, tests; **Scope:** M
+
+- [ ] Model may propose typed requirements only when each item maps to JD evidence; inferred importance is distinct from explicit importance.
+- **Verify:** malformed output, unsupported inference, prompt injection, run variance, timeout, and outage tests fail closed or fall back safely.
+
+#### AA033: Add versioned O*NET/ESCO boundary
+
+**Dependencies:** AA030; **Likely files:** taxonomy adapter, import job, attribution/version record, tests; **Scope:** M
+
+- [ ] Map occupations and skills to licensed, versioned O*NET/ESCO concepts while preserving original wording and mapping confidence.
+- **Verify:** license/attribution, version pin, alias, ambiguity, update/rollback, and unmapped-concept tests pass.
+
+#### AA034: Build first domain pack
+
+**Dependencies:** AA005, AA031-AA033; **Likely files:** domain pack, aliases/rules, fixture manifest, docs; **Scope:** M
+
+- [ ] Encode only reviewed domain concepts, credentials, terminology, and evaluation fixtures for the approved first domain.
+- **Verify:** reviewer signs the pack; unsupported domains are labeled and cannot inherit the first domain's claim.
+
+#### AA035: Specify optional market-frequency data
+
+**Dependencies:** AA003; **Likely files:** dataset contract, provenance/licensing record, privacy review; **Scope:** S
+
+- [ ] Define dated, permissioned market-corpus inputs and bias/coverage reporting without collecting or scraping data in this task.
+- **Verify:** absence or expiry of an approved dataset disables frequency-based claims and scoring inputs.
+
+#### AA036: Build job-intelligence benchmark
+
+**Dependencies:** AA030-AA034; **Likely files:** benchmark harness, locked annotations, report, CI gate; **Scope:** M
+
+- [ ] Measure requirement-type F1, importance F1, citation validity, mapping quality, abstention, variance, latency, and cost per segment.
+- **Verify:** reproducible report meets `CONSTRAINTS.md` floors on the locked first-domain set before AA3 passes.
+
+#### Gate AA3: Evidence-linked job intelligence
+
+- [ ] Typed-requirement, importance, mapping, citation, and supported-domain gates pass; market frequency stays disabled without an approved dataset.
+
+### Phase AA4: Deterministic scoring v2
+
+#### AA040: Introduce versioned score policies
+
+**Dependencies:** AA1-AA3, ADR-0006 approval; **Likely files:** score contracts, policy registry, legacy adapter, tests; **Scope:** M
+
+- [ ] Version dimensions, weights, bands, evidence states, normalization, and legacy read behavior independently of model prompts.
+- **Verify:** golden tests reproduce each version and historical results never silently change meaning.
+
+#### AA041: Implement Evidence Confidence gating
+
+**Dependencies:** AA040; **Likely files:** confidence policy, analysis orchestration, result model/UI, tests; **Scope:** M
+
+- [ ] Compute evidence readiness from extraction coverage/confidence/disagreement and withhold dependent scores when unsafe.
+- **Verify:** low-confidence and missing-critical-field cases show exact repair/review reasons and no authoritative numeric result.
+
+#### AA042: Implement ATS Compatibility dimensions
+
+**Dependencies:** AA041; **Likely files:** compatibility rules, evidence trace, score service, tests; **Scope:** M
+
+- [ ] Compute continuous, deterministic parseability/structure/contact/date/section/format dimensions with passed/failed/not-evaluated states.
+- **Verify:** boundary, skipped-rule, layout, duplicate-content, and international-format tests produce complete evidence traces.
+
+#### AA043: Implement typed Job Alignment
+
+**Dependencies:** AA036, AA041; **Likely files:** alignment engine, requirement states, evidence trace, tests; **Scope:** M
+
+- [ ] Score explicit requirements as met/partially met/not met/unknown/not applicable, with caps and no double counting.
+- **Verify:** repeated keywords, aliases, missing evidence, inferred importance, years, education, certification, and contradiction fixtures pass.
+
+#### AA044: Remove LLM numeric authority
+
+**Dependencies:** AA042, AA043; **Likely files:** qualitative stage, score assembly, historical-result presenter, tests; **Scope:** M
+
+- [ ] Model output is limited to cited qualitative suggestions; historical blended scores are labeled legacy and are not compared as v2 scores.
+- **Verify:** changing provider/model prose cannot change authoritative numeric output for identical structured evidence.
+
+#### AA045: Add score explanations and readiness experiment
+
+**Dependencies:** AA044; **Likely files:** result read model, score UI, feature flag, tests; **Scope:** M
+
+- [ ] Expose the versioned resume state, blockers, top five high-impact improvements, reliable strengths, missing evidence, dimension contributions, evidence links, unknowns, limitations, and optional Application Readiness only behind an experiment flag.
+- **Verify:** comprehension/accessibility review confirms users do not see scores as employer acceptance probability.
+
+#### AA046: Build scoring validity and robustness suite
+
+**Dependencies:** AA040-AA045; **Likely files:** scoring benchmark, metamorphic fixtures, report, CI gate; **Scope:** M
+
+- [ ] Evaluate determinism, expert agreement, counterfactual invariance, stuffing/duplication resistance, prompt injection, segment error, latency, and cost.
+- **Verify:** identical inputs are stable, protected-name changes do not alter score, and all required segment/claim gates are reported separately.
+
+#### Gate AA4: Explainable deterministic scoring
+
+- [ ] Score-contract, legacy, evidence, per-domain, expert-agreement, metamorphic, fairness/error, and comprehension gates pass.
+
+### Phase AA5: Same-page authoring and grounded writing
+
+#### AA050: Add structured result-page editing
+
+**Dependencies:** AA2, AA4; **Likely files:** resume editor route/components, mutation API, tests; **Scope:** M
+
+- [ ] Edit the structured resume on the analysis result page by section/line while preserving source evidence and version identity.
+- **Verify:** keyboard, screen-reader, validation, save failure, stale version, mobile, and no-JavaScript-safe recovery behaviors pass.
+
+#### AA051: Navigate findings to editable lines
+
+**Dependencies:** AA050; **Likely files:** finding queue, editor navigation, impact model, tests; **Scope:** M
+
+- [ ] Rank findings by evidence-backed impact and effort, display at most the top five in the high-impact section, and focus the exact affected line/section without hiding uncertainty or discarding the remaining findings.
+- **Verify:** every released rule/requirement maps to an editable target or an explicit non-editable explanation.
+
+#### AA052: Add typed suggestion patches
+
+**Dependencies:** AA023, AA051; **Likely files:** suggestion schema, provider adapter, validator, tests; **Scope:** M
+
+- [ ] Suggestions identify source fact IDs, affected rule/requirement IDs, proposed operations, rationale, confidence, and clarification needs.
+- **Verify:** unsupported IDs, free-form document replacement, cross-section mutation, malformed output, and stale-version application are rejected.
+
+#### AA053: Add clarification questions
+
+**Dependencies:** AA052; **Likely files:** clarification contract, editor UI, mutation service, tests; **Scope:** M
+
+- [ ] Ask for missing result, measurement, scope, method, or ownership instead of inventing stronger claims.
+- **Verify:** candidate answers become candidate-confirmed facts with provenance; unanswered questions cannot silently populate content.
+
+#### AA054: Add XYZ and alternative bullet patterns
+
+**Dependencies:** AA052, AA053; **Likely files:** bullet strategy, prompt/schema, UI, tests; **Scope:** M
+
+- [ ] Offer Google-style “accomplished X, measured by Y, by doing Z” when evidence supports it, plus action-impact-context and action-scope-result alternatives.
+- **Verify:** no template requires fabricated metrics; grammar, factual strength, duplication, seniority, and domain terminology are checked.
+
+#### AA055: Add candidate-controlled change workflow
+
+**Dependencies:** AA022, AA052; **Likely files:** change service, editor controls, audit/read model, tests; **Scope:** M
+
+- [ ] Accept, edit, reject, undo, compare, and restore-as-new-version are explicit actions recorded in the immutable ledger.
+- **Verify:** concurrency, repeated action/idempotency, provider outage, audit, undo, ownership, and deletion/export tests pass.
+
+#### AA056: Show projected and actual score delta
+
+**Dependencies:** AA043, AA055; **Likely files:** preview scorer, result UI, score history, tests; **Scope:** M
+
+- [ ] Label pre-acceptance change as projected and recompute actual deterministic scores only after the new version exists.
+- **Verify:** stale evidence, multiple edits, rollback, unknown requirements, and score-policy-version changes cannot display a false delta.
+
+#### AA057: Benchmark writer grounding and model options
+
+**Dependencies:** AA052-AA056; **Likely files:** writer benchmark, adversarial set, report, model policy; **Scope:** M
+
+- [ ] Compare eligible models on unsupported-fact rate, citation validity, edit usefulness, domain quality, latency, and cost using one locked contract.
+- **Verify:** zero unsupported accepted facts; a cheaper/faster model is selected only if it passes the same quality gates.
+
+#### Gate AA5: Truthful candidate-controlled authoring
+
+- [ ] Grounding, browser accessibility, concurrent edit, failure, undo, correction, model comparison, and candidate-review gates pass.
+
+### Phase AA6: Verified PDF and DOCX rendering
+
+#### AA060: Define renderer and artifact states
+
+**Dependencies:** AA2, ADR-0007 approval; **Likely files:** renderer interface, template manifest, artifact contract, tests; **Scope:** M
+
+- [ ] Define deterministic input, escaping, renderer/template versions, queued/rendered/verification-failed/verified states, and evidence report.
+- **Verify:** contract tests prevent template-specific data from becoming canonical content and block unverified recommended downloads.
+
+#### AA061: Implement semantic preview and one PDF template
+
+**Dependencies:** AA060; **Likely files:** preview, PDF renderer, template, tests; **Scope:** M
+
+- [ ] Render the approved first-domain profile with semantic sections, selectable text, valid links, and no critical clipping.
+- **Verify:** visual, text, link, page-size, font/encoding, overflow, keyboard, and screen-reader preview checks pass.
+
+#### AA062: Implement one DOCX template
+
+**Dependencies:** AA060; **Likely files:** DOCX renderer, template, tests, fixture; **Scope:** M
+
+- [ ] Render the same canonical content and section order without divergent authoring logic.
+- **Verify:** DOCX opens in approved viewers and passes text/order/link/style and round-trip fixtures.
+
+#### AA063: Implement parse-back verification
+
+**Dependencies:** AA061, AA062; **Likely files:** artifact verifier, extraction adapter, report model, tests; **Scope:** M
+
+- [ ] Re-extract each artifact and compare critical fields, normalized text, order, links, and expected section anchors to canonical content.
+- **Verify:** deliberate clipping, missing glyph, reordered column, broken link, and omitted-field fixtures lose the verified label.
+
+#### AA064: Enforce artifact layout policies
+
+**Dependencies:** AA063; **Likely files:** layout policy, renderer checks, diagnostics UI, tests; **Scope:** M
+
+- [ ] Enforce A4/US Letter selection, page-count guidance, overflow, links, embedded fonts/encoding, and deterministic safe failure.
+- **Verify:** boundary content and locale fixtures provide actionable diagnostics rather than silently shrinking or dropping content.
+
+#### AA065: Build render-parity and accessibility corpus
+
+**Dependencies:** AA061-AA064; **Likely files:** artifact benchmark, fixture manifest, accessibility report, CI gate; **Scope:** M
+
+- [ ] Evaluate every released template/format/locale combination for critical parity, normalized text, reading order, accessibility, failure, and latency.
+- **Verify:** `CONSTRAINTS.md` artifact floors pass per combination; failures block the recommended download path.
+
+#### Gate AA6: Verified core artifacts
+
+- [ ] PDF/DOCX parity, accessibility, security, performance, and safe-failure evidence passes for every released combination.
+
+### Phase AA7: Sandboxed LaTeX rendering
+
+#### AA070: Approve LaTeX threat model
+
+**Dependencies:** AA6; **Likely files:** threat model, compiler ADR, package allowlist, runbook; **Scope:** S
+
+- [ ] Approve runtime isolation, package/font allowlist, no-shell-escape/network/host policy, resource limits, cleanup, and incident response.
+- **Verify:** security owner records misuse cases, controls, residual risk, rollback, and provider/runtime exit path.
+
+#### AA071: Implement canonical-to-LaTeX rendering
+
+**Dependencies:** AA070; **Likely files:** LaTeX renderer, templates, escape library, tests; **Scope:** M
+
+- [ ] Generate source from canonical content with complete escaping and no raw user-controlled commands.
+- **Verify:** special characters, Unicode, URLs, bidi text, injection payloads, long content, and deterministic-source tests pass.
+
+#### AA072: Isolate LaTeX compilation
+
+**Dependencies:** AA071; **Likely files:** compiler worker, sandbox policy, cleanup, tests; **Scope:** M
+
+- [ ] Compile without network, shell escape, writable host mounts, or reusable state; cap CPU, memory, files, output, and wall time.
+- **Verify:** malicious input, package escape, file-read/write, fork/resource exhaustion, timeout, cleanup, and cancellation tests pass.
+
+#### AA073: Add profile-specific LaTeX templates
+
+**Dependencies:** AA071; **Likely files:** template manifests, templates, preview metadata, fixtures; **Scope:** M
+
+- [ ] Add reviewed templates by supported profile rather than assuming one student/technology layout fits all users.
+- **Verify:** each template declares domain/locale/page support and passes the same canonical content and accessibility policy.
+
+#### AA074: Add LaTeX diagnostics and source download
+
+**Dependencies:** AA072, AA073; **Likely files:** diagnostics sanitizer, preview/source routes, UI, tests; **Scope:** M
+
+- [ ] Provide safe diagnostics, preview, source download, retry, and fallback to verified core templates without exposing host paths or secrets.
+- **Verify:** compilation errors, timeout, unsupported glyph/package, stale version, authorization, and log-redaction paths pass.
+
+#### AA075: Benchmark compiled artifacts
+
+**Dependencies:** AA072-AA074; **Likely files:** LaTeX benchmark, parse-back fixtures, security report, CI gate; **Scope:** M
+
+- [ ] Run parity, accessibility, template, malicious-input, resource, latency, and failure evaluation for each released combination.
+- **Verify:** security review and AA6-equivalent artifact floors pass before the production flag can be enabled.
+
+#### Gate AA7: Safe LaTeX export
+
+- [ ] Sandbox, malicious-input, resource, parity, accessibility, operational, and rollback evidence passes with explicit security-owner approval.
+
+### Phase AA8: Representative validity and staged claims
+
+#### AA080: Acquire permitted first-domain data
+
+**Dependencies:** AA003, AA005; **Likely files:** corpus registry, consent/provenance records, retention controls, data card; **Scope:** M
+
+- [ ] Acquire the approved planning sample across native/scanned/mixed/layout/experience/locale segments with documented rights and exclusions.
+- **Verify:** privacy review, provenance audit, access log, deletion drill, segment counts, and coverage gaps are complete before annotation.
+
+#### AA081: Run independent annotation and adjudication
+
+**Dependencies:** AA080; **Likely files:** annotation handbook, annotation store, adjudication log, agreement report; **Scope:** M
+
+- [ ] Two trained annotators independently label critical fields, requirements, evidence, and expert rubric; disagreements are adjudicated blind to system output.
+- **Verify:** agreement meets the approved floor per label family or the handbook/data are revised before continuing.
+
+#### AA082: Freeze evaluation partitions
+
+**Dependencies:** AA081; **Likely files:** partition manifest, hash registry, leakage report, access policy; **Scope:** S
+
+- [ ] Freeze development, calibration, and locked test partitions with person/employer/template and near-duplicate leakage controls.
+- **Verify:** hashes and membership are immutable, test access is restricted/audited, and no calibration report includes locked-test labels.
+
+#### AA083: Calibrate without the locked test set
+
+**Dependencies:** AA082, AA4; **Likely files:** calibration pipeline, policy versions, calibration report, approval record; **Scope:** M
+
+- [ ] Fit or revise thresholds/weights only on development/calibration data with rationale, uncertainty, and rollback version.
+- **Verify:** reproducible calibration contains no test-set access and documents sensitivity plus rejected alternatives.
+
+#### AA084: Run the locked end-to-end evaluation
+
+**Dependencies:** AA5-AA7 as released, AA083; **Likely files:** evaluation runner, locked report, fairness/error report, artifact archive; **Scope:** M
+
+- [ ] Evaluate extraction, job intelligence, scoring, writer grounding, artifact parity, accessibility, fairness/error, failure, latency, and cost per required segment.
+- **Verify:** bootstrap confidence intervals and lower bounds are reported; one failed required segment fails the gate regardless of aggregate score.
+
+#### AA085: Publish versioned evidence and limitations
+
+**Dependencies:** AA084; **Likely files:** model/ruleset card, dataset card, limitations page, release note; **Scope:** M
+
+- [ ] Publish versions, intended use, prohibited use, data composition, metrics, uncertainty, known failures, monitoring, rollback, and expiry/retest conditions.
+- **Verify:** independent technical, domain, privacy, fairness, and product reviewers approve every public claim against the locked report.
+
+#### AA086: Promote only the achieved claim level
+
+**Dependencies:** AA085; **Likely files:** claim registry, product copy, feature flags, rollout/monitor plan; **Scope:** M
+
+- [ ] Release only the first domain/locale/formats that passed, with monitoring, drift thresholds, stop conditions, and rollback.
+- **Verify:** unsupported segments remain labeled; regression, evidence-quality, complaint/correction, latency, cost, and fairness monitors are active.
+
+#### Gate AA8: Domain-valid claim
+
+- [ ] Every required segment meets the approved lower confidence bound and independent reviewers approve construct validity and exact claim language.
+- [ ] Only after this gate may copy use the approved scoped domain-level claim; “all industries” remains unsupported until each claimed segment passes.
+
+### Phase AA9: Recruiter and vendor calibration pilot
+
+#### AA090: Design transparent recruiter calibration
+
+**Dependencies:** AA8, A5 prerequisites; **Likely files:** pilot protocol, rubric contract, notice/correction policy, legal review; **Scope:** M
+
+- [ ] Define employer rubric inputs, visibility, override/rationale, candidate notice, correction/appeal, retention, audit, and prohibited automatic rejection.
+- **Verify:** legal, fairness, security, privacy, domain, and product owners approve pilot scope, stop conditions, and human-decision boundary.
+
+#### AA091: Run one named-vendor ingestion comparison
+
+**Dependencies:** AA090, named authorized environment; **Likely files:** comparison protocol, synthetic/consented fixtures, observations, report; **Scope:** M
+
+- [ ] Compare one named vendor/version/configuration on permitted documents and defined ingestion behaviors without reverse-engineering proprietary scores.
+- **Verify:** repeatable observations, limitations, configuration/version, dates, errors, and raw evidence support only the named compatibility statement.
+
+#### AA092: Run one career-center or recruiter pilot
+
+**Dependencies:** AA090, optional AA091; **Likely files:** pilot plan, participant records, outcome rubric, pilot report; **Scope:** M
+
+- [ ] Run an allowlisted advisory pilot measuring rubric agreement, corrections, user comprehension, workflow usefulness, fairness/error, safety, latency, and cost.
+- **Verify:** independent review approves scoped findings; no hidden score, automatic decision, general vendor equivalence, or selection-probability claim is enabled.
+
+#### Gate AA9: Scoped recruiter/vendor evidence
+
+- [ ] Pilot evidence supports only the named domain, locale, vendor/configuration, and workflow; ongoing monitoring, appeals, human oversight, and rollback are operational.
+
 ## Phase 8: B2C billing and entitlements
 
 ### T080: Add entitlement and usage model
@@ -793,6 +1298,18 @@ npm run test:performance
 npm audit --omit=dev --audit-level=high
 ```
 
+Accuracy-v2 target commands do not exist yet and must not be reported as run until their owning `AA*` tasks implement them:
+
+```bash
+npm run benchmark:extraction-v2
+npm run benchmark:job-intelligence
+npm run benchmark:scoring-validity
+npm run benchmark:writer-grounding
+npm run benchmark:render-parity
+npm run benchmark:fairness
+npm run verify:accuracy-v2
+```
+
 Required non-command evidence:
 
 - [ ] Production-build browser state matrix.
@@ -802,6 +1319,12 @@ Required non-command evidence:
 - [ ] Backup restore drill.
 - [ ] Rollback rehearsal.
 - [ ] Scoring benchmark report.
+- [ ] Approved corpus governance, annotation agreement, and locked-partition evidence.
+- [ ] Extraction/OCR provider comparison with segment-level confidence intervals, latency, cost, and privacy review.
+- [ ] Independent first-domain construct-validity and claim-language review.
+- [ ] Writer grounding and unsupported-fact report.
+- [ ] PDF/DOCX parse-back and accessibility report; LaTeX security evidence if enabled.
+- [ ] Named-vendor/recruiter pilot evidence only when claiming that named scope.
 - [ ] Accessibility manual spot check.
 - [ ] Privacy export/deletion evidence.
 - [ ] Human approval at the active gate.

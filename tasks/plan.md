@@ -1,8 +1,9 @@
 # Implementation Plan: Resumide Reliable Product to Enterprise Platform
 
-Status: **PARTIAL; CANDIDATE B2C OPERATING BASELINE APPROVED, THREE GATE A0 DECISIONS REMAIN**
+Status: **PARTIAL; ACCURACY-V2 ARCHITECTURAL DIRECTION APPROVED; AA010 AUTHORIZED; CONCRETE AA0 DECISIONS AND GATES A0/A4 OPEN**
 Architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
 Executable checklist: [`todo.md`](todo.md)
+Accuracy-v2 subplan: [`accuracy-authoring-plan.md`](accuracy-authoring-plan.md)
 Decision records: [`../docs/decisions/`](../docs/decisions/)
 
 ## 1. Objective
@@ -19,7 +20,9 @@ This plan does not authorize implementation automatically. Each gate requires hu
 - Test/CI foundation.
 - Authentication, tenant-aware persistence, and private file storage.
 - Safe upload, extraction, asynchronous analysis, deterministic scoring, and structured LLM feedback.
-- Candidate-facing, evidence-grounded summary and bullet writing suggestions.
+- Candidate-facing, evidence-grounded same-page editing, line-by-line suggestions, and immutable resume versions.
+- Separate Evidence Confidence, ATS Compatibility, Job Alignment, and optional Application Readiness contracts.
+- Canonical resume content with verified PDF/DOCX rendering; sandboxed LaTeX rendering after the core artifact gate.
 - Home, upload, progress, result, account/privacy, and billing pages. Enterprise administration remains deferred until Gate A5.
 - Accessibility, responsive layout, reduced motion, security, privacy, observability, backup/restore, and deployment controls.
 - B2C monetization followed by gated enterprise capabilities.
@@ -30,7 +33,8 @@ This plan does not authorize implementation automatically. Each gate requires hu
 - Exact claims of emulating proprietary ATS products.
 - Microservices, Kubernetes, event streaming, vector databases, or multi-provider orchestration without measured need.
 - Employer integrations before tenant, audit, and privacy foundations pass.
-- Full resume builder and cover letter generation unless added as separately specified vertical slices after the reliable core.
+- Cover-letter generation, automatic job application, candidate ranking, or automatic hiring decisions.
+- Named-ATS compatibility or recruiter-outcome claims until controlled observation and calibration gates pass.
 
 ## 3. Required decisions at Gate A0
 
@@ -68,6 +72,7 @@ Phase 4  Safe asynchronous ingestion and analysis
 Phase 5  Versioned and benchmarked scoring
 Phase 6  Complete accessible web experience
 Phase 7  Security, privacy, and operations readiness
+Phase 7A Accuracy-v2, same-page authoring, and verified artifacts
 Phase 8  B2C entitlements and billing
 Phase 9  Enterprise workspace and governance
 Phase 10 Staged launch and continuous assurance
@@ -292,6 +297,39 @@ monitored staging E2E, rollback rehearsal, policy approval, human
 security/operations approval, live provider verification, and deployment-owned
 controls require external evidence.
 
+## 12A. Phase 7A: Accuracy-v2, same-page authoring, and verified artifacts
+
+### Outcome
+
+Candidates receive evidence-backed guidance that clearly distinguishes whether the document was read reliably, whether it is structurally compatible with common ATS ingestion, and how well it matches a specific job. They can edit the resume on the result page, accept only fact-supported suggestions, and export a PDF or DOCX whose content is parsed back and verified. LaTeX follows as a sandboxed renderer, not as the source of truth.
+
+This phase is specified in [`accuracy-authoring-plan.md`](accuracy-authoring-plan.md) and [`../docs/ATS_SCORING_AND_AUTHORING_SPEC.md`](../docs/ATS_SCORING_AND_AUTHORING_SPEC.md). Its numeric floors are in [`../CONSTRAINTS.md`](../CONSTRAINTS.md). ADR-0006 and ADR-0007 remain `Proposed`; this section authorizes no implementation by itself.
+
+### Dependency order
+
+1. **AA0 Truth contract:** approve score meanings, legacy-score treatment, corpus governance, first occupation/domain, first locale, artifact formats, and OCR bake-off protocol.
+2. **AA1 Document evidence:** native extraction, scanned-page detection, provider bake-off, OCR normalization, geometry, reading order, field evidence, and confidence gating.
+3. **AA2 Canonical resume:** template-independent structured content, fact provenance, immutable versions, and change records.
+4. **AA3 Job intelligence:** typed requirements, explicit-versus-inferred importance, versioned O*NET/ESCO concepts, aliases, domain packs, and evidence citations.
+5. **AA4 Scoring v2:** deterministic, versioned ATS Compatibility and Job Alignment with counterfactual, stuffing, duplication, and prompt-injection resistance.
+6. **AA5 Authoring:** result-page editor, line-level diagnostics, fact-safe rewrite contracts, multiple bullet patterns including XYZ, impact review, undo, compare, and re-score.
+7. **AA6 Verified artifacts:** PDF/DOCX render adapters, overflow/link checks, parse-back parity, accessible output, and artifact evidence.
+8. **AA7 LaTeX:** reviewed templates and a networkless resource-bounded compiler after AA6 passes.
+9. **AA8 Domain validity:** locked representative per-segment corpus, independent review, expert agreement, fairness/error analysis, and claim review.
+10. **AA9 Recruiter/vendor pilot:** optional controlled observation for recruiter calibration or a specifically named ATS claim; no automatic hiring action.
+
+### Gates
+
+- **AA0** must pass before implementation. Documentation alone does not pass it.
+- **AA1-AA7** require their focused correctness, security, privacy, accessibility, performance, and artifact evidence before the next dependent phase.
+- **AA8** must pass before the product uses “industry-level,” “industry-standard,” or generalized recruiter-validity language.
+- **AA9** must pass before any named vendor compatibility or recruiter/outcome-calibrated claim.
+- The existing A3 pass remains a synthetic regression baseline only; it is not evidence for AA8 or AA9.
+
+### Verification
+
+Each `AA*` task and its required evidence is tracked in [`todo.md`](todo.md). Planned Accuracy-v2 commands are targets until the corresponding task implements them; `npm run benchmark:phase5` remains the current synthetic baseline.
+
 ## 13. Phase 8: B2C entitlements and billing
 
 ### Outcome
@@ -363,21 +401,27 @@ A task is complete only when:
 
 ## 17. Risks and mitigations
 
-| Risk                             | Impact   | Mitigation                                                                      |
-| -------------------------------- | -------- | ------------------------------------------------------------------------------- |
-| Prototype expands into a rewrite | High     | Preserve modular monolith and vertical slices; gate new services                |
-| AI costs are abused              | Critical | Auth, shared rate limit, quota, concurrency cap, token cap, kill switch         |
-| Resume PII leaks                 | Critical | Private storage, consent, least privilege, short URLs, redacted logs, deletion  |
-| Scoring claims exceed evidence   | High     | Benchmarks, versioning, limitation copy, human approval                         |
-| Async jobs duplicate charges     | High     | Idempotency, leases, attempt ledger, provider request correlation               |
-| Vendor lock-in                   | Medium   | Narrow adapters and proposed ADRs; avoid lowest-common-denominator abstractions |
-| UI polish hides broken states    | High     | State matrix and production-build E2E gates                                     |
-| Tenant isolation fails           | Critical | Central authz helper, RLS/policies, adversarial integration tests               |
-| Docs drift again                 | Medium   | Canonical pointers, CI link checks, status updates in each PR                   |
+| Risk                                            | Impact   | Mitigation                                                                                                         |
+| ----------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| Prototype expands into a rewrite                | High     | Preserve modular monolith and vertical slices; gate new services                                                   |
+| AI costs are abused                             | Critical | Auth, shared rate limit, quota, concurrency cap, token cap, kill switch                                            |
+| Resume PII leaks                                | Critical | Private storage, consent, least privilege, short URLs, redacted logs, deletion                                     |
+| Scoring claims exceed evidence                  | High     | Benchmarks, versioning, limitation copy, human approval                                                            |
+| Extraction loses or misorders evidence          | Critical | Native/OCR benchmarks, geometry, confidence gates, page citations, unsafe-state blocking                           |
+| LLM invents or strengthens facts                | Critical | Fact ledger, typed suggestion patches, evidence citations, candidate confirmation, zero unsupported accepted facts |
+| Job matching stays generic or technology-biased | High     | Typed requirements, versioned O*NET/ESCO concepts, domain packs, adjudicated per-domain evaluation                 |
+| Export differs from the editor                  | Critical | Canonical source of truth, deterministic rendering, parse-back verification, artifact quarantine on failure        |
+| Aggregate metrics hide segment failure          | High     | Locked per-segment reports, confidence intervals, fairness/error review, no aggregate-only gate                    |
+| Evaluation corpus exposes PII                   | Critical | Provenance registry, synthetic or de-identified defaults, access limits, retention and deletion controls           |
+| Async jobs duplicate charges                    | High     | Idempotency, leases, attempt ledger, provider request correlation                                                  |
+| Vendor lock-in                                  | Medium   | Narrow adapters and proposed ADRs; avoid lowest-common-denominator abstractions                                    |
+| UI polish hides broken states                   | High     | State matrix and production-build E2E gates                                                                        |
+| Tenant isolation fails                          | Critical | Central authz helper, RLS/policies, adversarial integration tests                                                  |
+| Docs drift again                                | Medium   | Canonical pointers, CI link checks, status updates in each PR                                                      |
 
 ## 18. Handoff rules for implementation agents
 
-1. Read `ARCHITECTURE.md`, this plan, the relevant ADR, and only the active task section.
+1. Read `CONSTRAINTS.md`, `ARCHITECTURE.md`, this plan, the relevant ADR, and only the active task section. For an `AA*` task, also read the Accuracy-v2 spec and subplan.
 2. Confirm the active gate is approved; otherwise stop at design/interfaces.
 3. Inspect Git state and preserve user-owned changes.
 4. Implement the smallest unblocked task ID from `todo.md`.

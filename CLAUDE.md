@@ -6,11 +6,12 @@ Resumide is a React Router SSR application that combines deterministic ATS compa
 
 Before changing implementation, read these files in order:
 
-1. [`ARCHITECTURE.md`](ARCHITECTURE.md) for system boundaries and invariants.
-2. [`tasks/plan.md`](tasks/plan.md) for the gated implementation sequence.
-3. [`tasks/todo.md`](tasks/todo.md) for executable task status and evidence.
-4. [`docs/README.md`](docs/README.md) for the documentation map and verification sources.
-5. The relevant ADR in [`docs/decisions/`](docs/decisions/).
+1. [`CONSTRAINTS.md`](CONSTRAINTS.md) for the quality floor and proposed Accuracy-v2 gates. Do not weaken it to make a change pass.
+2. [`ARCHITECTURE.md`](ARCHITECTURE.md) for system boundaries and invariants.
+3. [`tasks/plan.md`](tasks/plan.md) for the gated implementation sequence.
+4. [`tasks/todo.md`](tasks/todo.md) for executable task status and evidence.
+5. [`docs/README.md`](docs/README.md) for the documentation map and verification sources.
+6. The relevant ADR in [`docs/decisions/`](docs/decisions/).
 
 Preserve the status vocabulary used by the project: `IMPLEMENTED`, `VERIFIED`, `PARTIAL`, `TARGET`, `DEFERRED`, and `BLOCKED`. Documentation is not evidence by itself. Do not mark a phase or gate complete without its named automated evidence and required human approval. Hosted deployment, restore, notification sink, rollback, policy, and deployment-owned security controls remain separate external gates where noted.
 

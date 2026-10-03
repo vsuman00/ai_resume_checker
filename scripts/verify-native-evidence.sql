@@ -1,0 +1,71 @@
+-- Run after the local Supabase reset/seed. Synthetic records are rolled back.
+begin;
+do $$
+#variable_conflict use_variable
+declare
+  analysis_id uuid := 'dddddddd-dddd-dddd-dddd-dddddddddaa0';
+  resume_id uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa10';
+  version_id uuid := 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbaa10';
+  owner_id uuid := '11111111-1111-1111-1111-111111111111';
+  organization_id uuid := '22222222-2222-2222-2222-222222222222';
+  graph jsonb := '{
+    "schemaVersion":"native-evidence-v1", "extractorVersion":"unpdf-v1", "offsetUnit":"unicode_code_point",
+    "pages":[{"id":"page-1","pageNumber":1,"text":"alex@example.test","method":"native_text","confidence":"uncalibrated"}],
+    "spans":[{"id":"page-1-line-1","pageId":"page-1","start":0,"end":17,"text":"alex@example.test"}],
+    "assertions":[
+      {"field":"name","value":null,"state":"not_evaluated","confidence":"uncalibrated","evidence":null},
+      {"field":"email","value":"alex@example.test","state":"review_required","confidence":"uncalibrated","evidence":{"spanId":"page-1-line-1","start":0,"end":17}},
+      {"field":"phone","value":null,"state":"not_evaluated","confidence":"uncalibrated","evidence":null}
+    ]
+  }';
+  bad_graph jsonb;
+  persisted boolean;
+  saved public.analysis_extractions%rowtype;
+begin
+  insert into public.resumes (id, organization_id, owner_id, display_name)
+    values (resume_id, organization_id, owner_id, 'aa010-synthetic.pdf');
+  insert into public.resume_versions (id, resume_id, organization_id, owner_id, storage_key, checksum, bytes, media_type)
+    values (version_id, resume_id, organization_id, owner_id, 'aa010/synthetic.pdf', repeat('a', 64), 1024, 'application/pdf');
+  insert into public.analyses (id, resume_version_id, organization_id, owner_id, status, idempotency_key)
+    values (analysis_id, version_id, organization_id, owner_id, 'extracting', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeaa0');
+
+  -- Tampered assertion must fail before either the extraction or transition.
+  bad_graph := jsonb_set(graph, '{assertions,1,value}', '"fabricated@example.test"');
+  begin
+    perform public.persist_analysis_extraction(analysis_id, 1, 'alex@example.test', 'unpdf-v1', 1,
+      '["alex@example.test"]', 'aa010-worker', 'aa010-test', repeat('b', 64), '[]', bad_graph);
+    raise exception 'Tampered evidence accepted' using errcode = 'XX000';
+  exception when raise_exception then
+    if SQLERRM <> 'Native assertion is not grounded' then raise; end if;
+  end;
+  if exists (select 1 from public.analysis_extractions e where e.analysis_id = analysis_id)
+     or (select a.status from public.analyses a where a.id = analysis_id) <> 'extracting' then
+    raise exception 'Rejected evidence mutated extraction state';
+  end if;
+
+  persisted := public.persist_analysis_extraction(analysis_id, 1, 'alex@example.test', 'unpdf-v1', 1,
+    '["alex@example.test"]', 'aa010-worker', 'aa010-test', repeat('b', 64), '[]', graph);
+  select * into saved from public.analysis_extractions e where e.analysis_id = analysis_id;
+  if persisted is not true or saved.evidence_graph is distinct from graph
+     or saved.owner_id is distinct from owner_id or saved.organization_id is distinct from organization_id
+     or (select a.status from public.analyses a where a.id = analysis_id) <> 'scoring' then
+    raise exception 'Native evidence was not atomically persisted with derived ownership';
+  end if;
+  if public.persist_analysis_extraction(analysis_id, 1, 'alex@example.test', 'unpdf-v1', 1,
+    '["alex@example.test"]', 'aa010-worker', 'aa010-test', repeat('b', 64), '[]', null) then
+    raise exception 'Repeated extraction changed a terminal stage';
+  end if;
+  if (select e.evidence_graph from public.analysis_extractions e where e.analysis_id = analysis_id) is distinct from graph then
+    raise exception 'Repeated extraction overwrote evidence';
+  end if;
+  if has_table_privilege('authenticated', 'public.analysis_extractions', 'SELECT')
+     or has_table_privilege('anon', 'public.analysis_extractions', 'SELECT')
+     or has_function_privilege('authenticated',
+       'public.persist_analysis_extraction(uuid,integer,text,text,integer,jsonb,text,text,text,jsonb,jsonb)', 'EXECUTE')
+     or has_function_privilege('anon',
+       'public.persist_analysis_extraction(uuid,integer,text,text,integer,jsonb,text,text,text,jsonb,jsonb)', 'EXECUTE') then
+    raise exception 'Client roles can read raw evidence or execute the worker RPC';
+  end if;
+end;
+$$;
+rollback;
