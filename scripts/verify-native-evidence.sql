@@ -1,5 +1,5 @@
--- Run after the local Supabase reset/seed. Synthetic records are rolled back.
-begin;
+-- Run after the local Supabase reset/seed. One statement for the CLI's
+-- prepared-query protocol; the nested subtransaction rolls back fixtures.
 do $$
 #variable_conflict use_variable
 declare
@@ -22,6 +22,7 @@ declare
   persisted boolean;
   saved public.analysis_extractions%rowtype;
 begin
+  begin
   insert into public.resumes (id, organization_id, owner_id, display_name)
     values (resume_id, organization_id, owner_id, 'aa010-synthetic.pdf');
   insert into public.resume_versions (id, resume_id, organization_id, owner_id, storage_key, checksum, bytes, media_type)
@@ -66,6 +67,8 @@ begin
        'public.persist_analysis_extraction(uuid,integer,text,text,integer,jsonb,text,text,text,jsonb,jsonb)', 'EXECUTE') then
     raise exception 'Client roles can read raw evidence or execute the worker RPC';
   end if;
+  raise exception 'Rollback synthetic AA010 fixture' using errcode = 'ZAA01';
+  exception when sqlstate 'ZAA01' then null;
+  end;
 end;
 $$;
-rollback;
