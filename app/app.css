@@ -2404,6 +2404,7 @@ form {
     gap: 20px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--border);
+    container-type: inline-size;
   }
 
   .parse-view-intro {
@@ -2434,6 +2435,7 @@ form {
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
+    flex-wrap: wrap;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--border);
   }
@@ -2471,6 +2473,67 @@ form {
     height: 100%;
     max-height: 540px;
     object-fit: contain;
+  }
+
+  .native-layout-preview {
+    position: relative;
+    max-width: 100%;
+    width: fit-content;
+  }
+
+  .native-layout-preview img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+  }
+
+  .native-layout-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .native-layout-overlay rect {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-dasharray: 4 2;
+  }
+
+  .native-layout-evidence {
+    overflow-wrap: anywhere;
+  }
+
+  .native-layout-evidence button {
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .native-layout-evidence button[aria-pressed="true"] {
+    border-color: var(--ink);
+  }
+
+  .native-layout-evidence button:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  .native-layout-evidence button:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  @container (max-width: 640px) {
+    .parse-comparison {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   .parse-preview-unavailable {

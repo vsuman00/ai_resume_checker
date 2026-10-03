@@ -36,3 +36,22 @@ retryable retention cleanup. Validate it with `npx supabase db lint --local`
 and a local reset when Docker/Supabase is available. A successful TypeScript
 or synthetic restore test does not substitute for applying this SQL to an
 isolated hosted project and attaching measured restore evidence to Gate A4.
+
+## Native layout rollout (AA011)
+
+Apply `20261003183204_native_layout_evidence.sql` before setting
+`NATIVE_LAYOUT_ENABLED=true` on a worker. The flag defaults to false and selects
+the service-only `persist_native_layout_extraction` RPC, which validates page
+identity, source text/offsets, approximate box bounds, and review warnings before
+atomically calling the existing extraction/evidence persistence path. It also
+persists AA010 evidence even if `NATIVE_EVIDENCE_ENABLED` is false. OCR output
+does not inherit native geometry. Existing workers and old saved results remain
+compatible; disabling the flag restores the older worker RPC path.
+
+Run `npm run test:aa011:db` after a local reset, or execute the tracked
+`scripts/verify-native-evidence.sql` against the hosted project. Its synthetic
+user/workspace/extractions roll back, and invalid layouts must not advance
+analysis state. Browser CI exercises the same RPC over PostgREST with a real
+synthetic PDF, authenticated owner review, and cross-owner denial. Raw extraction
+tables remain unavailable to client roles. Owner-filtered privacy export and
+deletion cascades include the additive layout column.

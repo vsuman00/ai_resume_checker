@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { NativeLayout } from "~/lib/native-layout-schema";
+import NativeLayoutEvidence from "./NativeLayoutEvidence";
 
 type Severity = "info" | "warn" | "error";
 
@@ -28,10 +30,12 @@ const ParseView = ({
   parseView,
   imageUrl,
   imageUrls = [],
+  nativeLayout = null,
 }: {
   parseView: ParseViewData;
   imageUrl: string;
   imageUrls?: string[];
+  nativeLayout?: NativeLayout | null;
 }) => {
   const { contact, sections, warnings, totalPages, totalLines } = parseView;
   const pages = parseView.pages.length
@@ -46,10 +50,17 @@ const ParseView = ({
         ],
       }));
   const [selectedPage, setSelectedPage] = useState(1);
+  const [selectedRun, setSelectedRun] = useState<string | null>(null);
   const page =
     pages.find((item) => item.pageNumber === selectedPage) ?? pages[0];
   const previewUrl =
     imageUrls[page.pageNumber - 1] ?? (page.pageNumber === 1 ? imageUrl : "");
+  const layoutPage = nativeLayout?.pages.find(
+    (item) => item.pageNumber === page.pageNumber,
+  );
+  const selectedBlock = layoutPage?.blocks.find(
+    (block) => block.id === selectedRun,
+  );
 
   return (
     <section className="parse-view" aria-labelledby="parse-view-heading">
@@ -77,18 +88,45 @@ const ParseView = ({
             <h3 id="parse-source-heading">Source document</h3>
             <span>Original PDF</span>
           </div>
-          <div className="parse-source-preview">
+          <div className="parse-source-preview" id="native-source-preview">
             {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt={`Resume source preview, page ${page.pageNumber}`}
-              />
+              <div className="native-layout-preview">
+                <img
+                  src={previewUrl}
+                  alt={`Resume source preview, page ${page.pageNumber}`}
+                />
+                {selectedBlock?.box && (
+                  <svg
+                    className="native-layout-overlay"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <rect
+                      x={selectedBlock.box.x * 100}
+                      y={selectedBlock.box.y * 100}
+                      width={selectedBlock.box.width * 100}
+                      height={selectedBlock.box.height * 100}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
+                )}
+              </div>
             ) : (
               <div className="parse-preview-unavailable">
                 Preview unavailable
               </div>
             )}
           </div>
+          {selectedBlock && (
+            <p role="status">
+              Page {page.pageNumber}, source run {selectedBlock.sourceOrder + 1}
+              : {selectedBlock.text}.{" "}
+              {selectedBlock.box
+                ? "Approximate location highlighted when a preview is available."
+                : "Geometry unavailable."}
+            </p>
+          )}
         </section>
 
         <section
@@ -105,7 +143,10 @@ const ParseView = ({
               id="parse-page-select"
               aria-label="Parse page"
               value={selectedPage}
-              onChange={(event) => setSelectedPage(Number(event.target.value))}
+              onChange={(event) => {
+                setSelectedPage(Number(event.target.value));
+                setSelectedRun(null);
+              }}
             >
               {pages.map((item) => (
                 <option key={item.pageNumber} value={item.pageNumber}>
@@ -118,6 +159,16 @@ const ParseView = ({
               confidence
             </span>
           </div>
+          {layoutPage ? (
+            <NativeLayoutEvidence
+              key={layoutPage.pageId}
+              page={layoutPage}
+              selectedRun={selectedRun}
+              onSelectRun={setSelectedRun}
+            />
+          ) : (
+            <p>Native layout evidence is unavailable for this saved page.</p>
+          )}
           <div className="parse-page-evidence" aria-live="polite">
             <h4>Page {page.pageNumber} extracted evidence</h4>
             <pre>{page.text || "No text extracted from this page."}</pre>

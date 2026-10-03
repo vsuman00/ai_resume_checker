@@ -12,6 +12,7 @@ import Summary from "~/components/Summary";
 import Details from "~/components/Details";
 import ATS from "~/components/ATS";
 import ParseView from "~/components/ParseView";
+import { readOwnedNativeLayout } from "~/lib/server/layout-read-model";
 import Heatmap from "~/components/Heatmap";
 import ResumeWriter from "~/components/ResumeWriter";
 import ResultTabs from "~/components/ResultTabs";
@@ -132,11 +133,13 @@ export async function loader({ params, request, url }: Route.LoaderArgs) {
     requestId: createRequestId(),
   });
 
-  return routeData({ result, signedResumeUrl }, { headers });
+  const nativeLayout = await readOwnedNativeLayout(data.id, user.id);
+  return routeData({ result, signedResumeUrl, nativeLayout }, { headers });
 }
 
 const Resume = () => {
-  const { result, signedResumeUrl } = useLoaderData<typeof loader>();
+  const { result, signedResumeUrl, nativeLayout } =
+    useLoaderData<typeof loader>();
   const { id } = useParams();
   const entry = useAnalysisStore((s) => (id ? s.entries[id] : undefined));
   const [imageUrl, setImageUrl] = useState("");
@@ -530,6 +533,7 @@ const Resume = () => {
                     parseView={result.parseView}
                     imageUrl={imageUrl}
                     imageUrls={imageUrls}
+                    nativeLayout={nativeLayout}
                   />
                 ),
                 keywords: (
