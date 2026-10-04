@@ -12,6 +12,28 @@ Scope clarification and sequencing correction: OCR is currently for **local test
 
 2026-10-04
 
+## Local execution authorization (2026-10-04)
+
+After the owner restored Docker Desktop, read-only verification found Docker 29.8.1 with ten CPUs and approximately 8 GiB allocated to its VM. The owner initially selected code/tests only, then explicitly corrected that instruction with “sorry test the OCR exection.” This authorizes the presented bounded local image build and synthetic OCR tests, not production integration, managed providers or real resume data.
+
+Approved recognition allocation: no network, host mounts or Docker socket inside the container; non-root, read-only root filesystem, dropped capabilities, no-new-privileges, two CPUs, 1 GiB memory with no additional swap, 256 MiB volatile scratch, 64 processes and existing stricter page/byte/character/deadline limits. Use one sequential evaluation at a time. Dependencies may be downloaded only during the explicitly authorized image build; recognition cannot install packages or access the network. Local API fees are zero; compute cost remains unknown under this bounded allocation, not free. The image is local and is not published or deployed.
+
+Host/runtime authorization is not evidence that isolation, termination, cleanup or OCR accuracy passed. Record the pinned image/package/language-data versions, actual test results and remaining gaps in the AA012 todo before acceptance. Original runtime/privacy approvals below remain pending wherever actual measurements have not yet satisfied them.
+
+### Verified local engineering runtime
+
+The test-only Dockerfile/entrypoint live in `scripts/ocr-runtime/`; the pure selective contract and container adapter are in `app/lib/server/ocr/`. Production Dockerfiles, legacy worker calls, storage/RPC schemas and feature flags are unchanged. The caller must authorize source/owner context and supply an immutable image ID built from this reviewed source; arbitrary image IDs do not attest the static engine metadata. The adapter verifies PDF bytes against the request SHA-256 and confines cleanup to its exact creation ID plus ownership label. Promise settlement alone does not prove cleanup; the live checker additionally inspects actual configuration and waits for owned-container removal. Cleanup has a bounded grace period beyond recognition cancellation; production orchestration must explicitly budget that before integration.
+
+Reviewed dependencies: Debian `bookworm-slim` base digest `3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251`, Tesseract package `5.3.0-2`, English data `1:4.1.0-2`, Poppler `22.12.0-2+deb12u3`, Python `3.11.2-1+b1`; English data SHA-256 `7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2`. Build-time assertions verify installed versions/hash. Transitive packages are captured in the image's `/opt/ocr-packages.txt` and hash receipt; exact replay also binds the final image ID, because the apt repository is not a frozen transitive snapshot. This local evaluation image is not a production security/certification claim.
+
+On macOS external volumes with AppleDouble/xattr failures, build using an explicit three-file context from `scripts/ocr-runtime`:
+
+```sh
+COPYFILE_DISABLE=1 tar --no-xattrs -cf - Dockerfile runner.py .dockerignore | docker build --pull=false --tag resumide-ocr:aa012-local-v1 -
+```
+
+Then inspect its immutable ID with `docker image inspect resumide-ocr:aa012-local-v1 --format '{{.Id}}'` and pass that ID to `npm run test:ocr:local -- sha256:...`. The checker does not pull/build an image, load `.env`, call Supabase or send data to a managed provider. It emits metadata/aggregate errors only, not recovered text. Its success label means runtime engineering checks passed, **not** transcription accuracy or AA1 acceptance. The initial three same-family development fixtures and ten-page repeated cancellation workload cannot substitute for the 24-document pilot or locked representative corpus.
+
 ## Context
 
 AA011 provides immutable native-PDF geometry and reading-order hypotheses. AA012 needs a real adapter for scanned/mixed PDFs with selective processing, geometry, confidence, provider metadata, bounded retries, cost accounting, and safe failure. Current code detects pages with fewer than eight non-whitespace native characters; that is a routing heuristic, not proof of scan quality or a release accuracy gate. The current OCR adapter accepts whole-document bytes, returns whole-document text and one confidence value, and defaults to disabled/unapproved with zero spend. It cannot yet implement selective page provenance or the proposed output contract.
