@@ -685,6 +685,8 @@ These tasks supplement, rather than retroactively upgrade, the synthetic A3 evid
 - [ ] Approve representative fixtures, normalized output contract, accuracy/latency/cost/privacy measures, regions, failure policy, and exit boundary.
 - **Verify:** protocol can compare native extraction and candidate providers without binding production to a vendor.
 
+**Proposal prepared (2026-10-04):** [`ADR-0008`](../docs/decisions/0008-selective-ocr-evaluation.md) compares native/self-hosted Tesseract, Google online OCR, AWS Textract and Azure Read using first-party sources. After the owner clarified Google Cloud is not in use, it recommends self-hosted Tesseract in the existing worker, no new cloud account and no external OCR disclosure. It defines a synthetic manifest/contract, selective routing, local retention controls, bounded attempts/estimated compute costs and a measured exit decision. Preparation is authorized, not runtime changes or paid/data-disclosing evaluation. AA002/AA003 approval, AA004 owner sign-off and worker-host validation remain pending; AA004/AA012 stay unchecked. No provider calls, real resume disclosures, provisioning or OCR enablement occurred.
+
 #### AA005: Approve first release segment
 
 **Dependencies:** AA001-AA004; **Likely files:** release-scope decision, domain/locale matrix, template matrix; **Scope:** S
