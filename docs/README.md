@@ -48,6 +48,7 @@ The [`decisions/`](decisions/) directory contains the ADRs that record durable a
 
 ### Database and test evidence
 
+- [`evaluation/AA012_LOCAL_OCR_DIAGNOSTICS.md`](evaluation/AA012_LOCAL_OCR_DIAGNOSTICS.md): measured local development diagnostics, failed transcription screening and explicit corpus/protocol gaps; not AA1 acceptance.
 - [`../supabase/migrations/README.md`](../supabase/migrations/README.md): migration ownership and deployment notes.
 - [`../tests/fixtures/CATALOG.md`](../tests/fixtures/CATALOG.md): deterministic fixture catalog.
 - [`../tests/fixtures/parsing/T051_PRECISION_RECALL.md`](../tests/fixtures/parsing/T051_PRECISION_RECALL.md): parsing evaluation snapshot.

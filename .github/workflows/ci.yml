@@ -20,6 +20,7 @@ jobs:
       - run: npm run check:container
       - run: npm run format:check
       - run: npm run format:check:native-layout
+      - run: npm run check:ocr:pilot-source
       - run: npm run lint
       - run: npm run test
       - run: npm run test:load
@@ -100,6 +101,11 @@ jobs:
         run: |
           ocr_image_id="$(docker image inspect resumide-ocr:${{ github.sha }} --format '{{.Id}}')"
           npm run test:ocr:local -- "$ocr_image_id"
+      - name: Record development OCR diagnostics (not release acceptance)
+        shell: bash
+        run: |
+          ocr_image_id="$(docker image inspect resumide-ocr:${{ github.sha }} --format '{{.Id}}')"
+          npm run test:ocr:pilot -- "$ocr_image_id"
 
   container:
     runs-on: ubuntu-latest
