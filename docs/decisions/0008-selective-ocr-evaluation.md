@@ -2,11 +2,11 @@
 
 ## Status
 
-Proposed. On 2026-10-04 the workspace owner authorized preparation of the provider comparison and approval proposal, not selection, paid evaluation, disclosure of resume data, provisioning, or production enablement. AA004 and AA012 remain pending. AA002 contract freezing and AA003 corpus governance also remain prerequisites; this proposal does not approve either.
+Local evaluation design accepted through [ADR-0009 candidate 1](0009-aa0-truth-contract-and-evaluation-design.md) by the workspace owner on 2026-10-04. AA002 logical contracts, AA003 governance and AA004 design are approved. Managed-provider comparisons remain research only. AA012 execution, host/isolation/resource/cost verification, corpus annotation assignments and measured adapter acceptance remain pending; production enablement and real-data access are not approved.
 
 ## Scope clarification
 
-Scope clarification and sequencing correction: the owner confirmed on 2026-10-04 that OCR is currently for **local testing**, not a hosted production rollout. No Google Cloud account is in use. This does not approve installing/running Tesseract, budgets or contracts. This ADR remains a proposal, not the active implementation task; AA000–AA005 and Gate AA0 must be reviewed in dependency order before AA012 work. Production hosting/region choices are deferred; local native-binary, renderer and resource support is still unverified.
+Scope clarification and sequencing correction: OCR is currently for **local testing**, not a hosted production rollout; no Google Cloud account is in use. Later explicit ADR-0009 approval closes Gate AA0 and accepts the local design, not measured host feasibility or adapter execution. First review provisional AA010/AA011; AA012 retains its prerequisites. Production hosting/region choices are deferred; local native-binary, renderer and resource support is still unverified. ADR-0009's no-new-paid-infrastructure/$0-external-spend policy governs; actual local compute estimates and hard host caps must be recorded before execution.
 
 ## Date
 
@@ -37,7 +37,7 @@ Facts checked against first-party documentation on 2026-10-04. Prices below are 
 
 Google's content handling is not a promise of zero retention of all metadata, nor a substitute for a privacy/subprocessor review. Self-hosting similarly does not imply zero logs, backups or operator access. No public documentation here constitutes a contractual/legal determination.
 
-## Proposed evaluation policy (requires approval)
+## Evaluation policy (AA0 design accepted; execution prerequisites remain)
 
 - **Input:** synthetic English printed-resume PDFs only for initial adapter verification; no real candidate data, handwriting, model training, paid add-ons, or public demo uploads. This is an engineering test scope, not approval of the first release domain/locale.
 - **Disclosure:** self-hosted-only for the initial evaluation; no external OCR requests. Run recognition only on selected rendered pages and preserve usable native text. Existing private Supabase access continues under the owner/purpose policy. Verify the worker's actual host and location; do not infer its residency from the Supabase region. Any later external OCR requires separate approval.
@@ -76,12 +76,12 @@ This minimizes unnecessary external processing and keeps vendor choice reversibl
 
 ## Approval criteria
 
-- [ ] Workspace/product owner approves self-hosted-only synthetic English evaluation, limits and the proposed **$5 total / $0.05 per-document compute** ceilings (or an explicit bounded local-only allocation). External OCR spending is prohibited.
+- [x] Workspace/product owner approves the local synthetic-only design and strict bounds through ADR-0009, 2026-10-04. No new paid infrastructure or external OCR spend. The earlier monetary ceilings are not a spending authorization; measured local compute/host caps remain required before execution.
 - [ ] Privacy/security owner approves the worker's actual region, process isolation, local logging/crash/backup retention, purpose enforcement and scratch cleanup. No external OCR subprocessor is approved.
-- [ ] Evaluation owner approves AA003 manifest partitions, labels/adjudication, screening targets and report/statistical method.
-- [ ] Contract owner freezes the request/response/page identity/cost/confidence/failure contract under AA002.
+- [x] Evaluation owner approves AA003 manifest partitions, labels/adjudication design, screening targets and report/statistical method through ADR-0009. Actual independent people must be assigned before collection.
+- [x] Contract owner freezes the logical request/response/page identity/cost/confidence/failure design under AA002/ADR-0009. Runtime adoption and validators remain implementation work.
 - [ ] Infrastructure operator identifies the worker host, validates native dependencies and compute estimates, and approves runtime/dependency changes before implementation. No Google account or managed OCR credentials are needed for the self-hosted proposal.
-- [ ] A dated approval records the selected evaluation scope and named responsible owners. Production selection and real-data access remain separately approved after measured results.
+- [x] ADR-0009 records workspace-owner approval in product/scoring/privacy/evaluation roles on 2026-10-04 at revision `e629a2882b3cc14a63771ae400f4f67a7e4f3f62`. Production selection and real-data access remain separately gated after measured results.
 
 ## References
 

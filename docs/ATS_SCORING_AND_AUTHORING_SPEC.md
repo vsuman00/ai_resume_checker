@@ -1,10 +1,10 @@
 # Spec: Evidence-grounded scoring and job-specific resume authoring
 
-Status: **DIRECTION APPROVED 2026-10-03; AA0 ACCEPTANCE INCOMPLETE; AA1 IMPLEMENTATION PROVISIONAL; DETAILED CONTRACTS/DECISIONS NOT FROZEN**
+Status: **AA0 DESIGN ACCEPTED 2026-10-04; LOGICAL CONTRACTS FROZEN IN ADR-0009; AA1 IMPLEMENTATION PROVISIONAL; CALIBRATION/RELEASE GATES OPEN**
 Module family: `document-evidence`, `job-intelligence`, `scoring-evaluation`, `resume-authoring`, `verified-rendering`
 Research basis: [`ATS_SCORING_AND_AUTHORING_RESEARCH.md`](ATS_SCORING_AND_AUTHORING_RESEARCH.md)
 
-AA0 review candidate: [`ADR-0009`](decisions/0009-aa0-truth-contract-and-evaluation-design.md) supplies worked score semantics, versioned logical contracts, annotation/governance protocol, local-only OCR evaluation and first-segment proposal. It remains proposed until explicit named approval; no runtime contract is frozen by its creation.
+AA0 accepted contract: [`ADR-0009`](decisions/0009-aa0-truth-contract-and-evaluation-design.md), candidate 1 at `e629a2882b3cc14a63771ae400f4f67a7e4f3f62`, explicitly approved by the workspace owner on 2026-10-04. It freezes score semantics, logical contracts, annotation/governance design, local-only OCR evaluation and software engineering / English / India scope. Runtime implementation, calibration and release validity remain separately verified gates; historical proposal text below must be read with this accepted decision.
 
 ## 1. Objective
 
@@ -390,13 +390,13 @@ npm run verify:accuracy-v2
 - Vendor-specific language appears only after controlled evidence for the named vendor/version.
 - Employer mode remains inaccessible until separate fairness, legal, security, notice, and human-oversight gates pass.
 
-## 18. Open decisions requiring human approval
+## 18. Decision register after AA0 approval
 
-1. Which occupation/domain pack is first: software engineering, general new-graduate roles, or another named market?
-2. Which regions/languages are in the first validated release?
-3. Whether the primary UI shows two scores or an additional Application Readiness summary.
+1. Approved first domain: software engineering; other domains remain unsupported until separately validated.
+2. Approved validation segment: English / India-focused resumes; release support still requires the segment gates.
+3. Approved UI semantics: two scores plus Evidence Confidence, no aggregate Application Readiness in initial scope.
 4. The approved scoring dimensions and weights after corpus/panel calibration.
-5. The OCR/document-provider bake-off candidates and privacy/cost ceiling.
-6. Whether PDF/DOCX precedes LaTeX by one release or ships in the same program.
+5. Approved evaluation design: local Tesseract/native comparison, synthetic-only, no external OCR spend or new paid infrastructure; actual host feasibility is required before execution.
+6. Approved format sequence: PDF/DOCX export first; LaTeX deferred behind separate compiler/isolation gates. PDF input scope is distinct from exports.
 7. Who may contribute real/anonymized evaluation documents and who adjudicates labels.
 8. Whether recruiter calibration is a career-center pilot first or an employer pilot.

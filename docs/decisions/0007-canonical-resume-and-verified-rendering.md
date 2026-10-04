@@ -2,7 +2,7 @@
 
 ## Status
 
-Architectural direction accepted by the workspace owner on 2026-10-03, authorizing the first native-PDF evidence slice. Canonical schema freezing, renderer selection, compiler isolation, artifact accessibility, and parse-back release policies retain their named acceptance requirements.
+Accepted for AA0 design by the workspace owner on 2026-10-04 through [ADR-0009](0009-aa0-truth-contract-and-evaluation-design.md), following limited architectural-direction/native-slice approval on 2026-10-03. Versioned logical canonical/suggestion/artifact contracts, immutable lineage, PDF/DOCX-first scope and parse-back design are frozen. Renderer selection/implementation, compiler isolation, artifact accessibility evaluation and measured parity release acceptance remain later gates; LaTeX stays deferred.
 
 ## Date
 

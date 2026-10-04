@@ -1,6 +1,6 @@
 # Implementation Plan: Resumide Reliable Product to Enterprise Platform
 
-Status: **PARTIAL; AA0 INCOMPLETE; AA000 ACTIVE; AA1 IMPLEMENTATION PROVISIONAL; GATES A0/A4 OPEN**
+Status: **PARTIAL; AA0 APPROVED 2026-10-04; AA010/AA011 CONFORMITY REVIEW NEXT; AA1 IMPLEMENTATION PROVISIONAL; GATES A0/A4 OPEN**
 Architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
 Executable checklist: [`todo.md`](todo.md)
 Accuracy-v2 subplan: [`accuracy-authoring-plan.md`](accuracy-authoring-plan.md)
@@ -303,7 +303,7 @@ controls require external evidence.
 
 Candidates receive evidence-backed guidance that clearly distinguishes whether the document was read reliably, whether it is structurally compatible with common ATS ingestion, and how well it matches a specific job. They can edit the resume on the result page, accept only fact-supported suggestions, and export a PDF or DOCX whose content is parsed back and verified. LaTeX follows as a sandboxed renderer, not as the source of truth.
 
-This phase is specified in [`accuracy-authoring-plan.md`](accuracy-authoring-plan.md) and [`../docs/ATS_SCORING_AND_AUTHORING_SPEC.md`](../docs/ATS_SCORING_AND_AUTHORING_SPEC.md). Its numeric floors are in [`../CONSTRAINTS.md`](../CONSTRAINTS.md). ADR-0006 and ADR-0007 remain `Proposed`; this section authorizes no implementation by itself.
+This phase is specified in [`accuracy-authoring-plan.md`](accuracy-authoring-plan.md) and [`../docs/ATS_SCORING_AND_AUTHORING_SPEC.md`](../docs/ATS_SCORING_AND_AUTHORING_SPEC.md). Its numeric floors are in [`../CONSTRAINTS.md`](../CONSTRAINTS.md). ADR-0006/0007 AA0 design is accepted through [`ADR-0009`](../docs/decisions/0009-aa0-truth-contract-and-evaluation-design.md), explicitly approved 2026-10-04. First review provisional AA010/AA011 for contract conformity; each later implementation retains its own prerequisites and acceptance gates.
 
 ### Dependency order
 

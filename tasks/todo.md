@@ -1,6 +1,6 @@
 # Resumide Enterprise Implementation Tasks
 
-Status: **PARTIAL; CANDIDATE B2C BASELINE IMPLEMENTED; ACCURACY-V2 DIRECTION APPROVED; AA010 IMPLEMENTED; CONCRETE AA0 DECISIONS AND A0/A4 OPEN**
+Status: **PARTIAL; CANDIDATE B2C BASELINE IMPLEMENTED; AA0 APPROVED 2026-10-04; AA010/AA011 CONFORMITY REVIEW NEXT; AA1 AND A0/A4 OPEN**
 Plan: [`plan.md`](plan.md)
 Accuracy-v2 subplan: [`accuracy-authoring-plan.md`](accuracy-authoring-plan.md)
 Architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
@@ -21,7 +21,7 @@ Architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
 - OCR is disabled behind an adapter. The workspace owner holds product, privacy/security, scoring, cost, operations, and release ownership until delegated.
 - Deferred: enterprise administration, enterprise roles, and employer workflows. Do not create an admin surface in the active build.
 - Still unresolved: maximum job duration/retry/dead-letter policy, scoring weights/skipped-rule/claim-language approval, and the B2C payment/entitlement model.
-- Accuracy-v2 architectural direction and AA010 were approved on 2026-10-03. The first domain/locale, detailed corpus governance, OCR bake-off, calibrated score policy, and release-format acceptance remain open AA0 decisions.
+- Accuracy-v2 AA0 design is approved on 2026-10-04 through ADR-0009, including first segment, logical contracts, synthetic corpus governance, local-only OCR protocol and export scope. Numeric calibration, runtime conformity and artifact release acceptance remain later gates; this does not close A0/A4.
 - The hosted Resumide Supabase project is active; initial migration, RLS, private bucket, and advisory checks passed through Supabase MCP.
 
 ## Phase 0: Architecture approval and documentation control
@@ -640,7 +640,7 @@ telemetry are implemented with redaction and low-cardinality route labels.
 - [ ] Security/privacy review, restore drill, SLO dashboards, staging E2E, rollback rehearsal, and policy approval are attached.
 - [ ] Human approves Gate A4.
 
-## Phase 7A: Accuracy-v2, authoring, and verified artifacts [AA0 INCOMPLETE; AA1 IMPLEMENTATION PROVISIONAL]
+## Phase 7A: Accuracy-v2, authoring, and verified artifacts [AA0 APPROVED 2026-10-04; AA1 IMPLEMENTATION PROVISIONAL]
 
 ### Approval record — 2026-10-03
 
@@ -650,7 +650,7 @@ The workspace owner approved the proposed Accuracy-v2 architecture and the recom
 
 The assistant incorrectly extended the limited direction/AA010 approval into AA011 implementation and reported AA011 as complete despite AA0 being open. Passing implementation tests does not satisfy its prerequisite gate. AA010/AA011 implementation and verification evidence are retained below, but their phase acceptance is pending AA0; neither AA0 nor AA1 is complete. Existing additive migrations and Git history are preserved, not destructively rolled back. No further AA1 implementation, OCR execution/installation, contract adoption, real-data collection or production enablement proceeds until AA000–AA005 and Gate AA0 receive their required recorded approvals. General “continue,” preparation approval, local-host information, or green CI must not substitute for those decisions.
 
-**Active next task: AA000**, followed by AA001/AA002 and AA003, then AA004/AA005 and explicit Gate AA0 review. The owner confirmed OCR is currently for local testing and Google Cloud is not in use; these are scope facts, not engine/policy/budget approval. ADR-0008 remains an inactive proposal until its dependencies and policy are approved.
+**Historical pre-approval routing:** AA000, then AA001/AA002 and AA003, then AA004/AA005 and explicit Gate AA0 review. The gap matrix below records what was missing before the later approval, not current blockers. Local-testing scope alone was not engine/policy/budget approval.
 
 | AA0 task | Existing material | Missing acceptance |
 | --- | --- | --- |
@@ -665,64 +665,68 @@ These tasks supplement, rather than retroactively upgrade, the synthetic A3 evid
 
 ### Phase AA0: Truth contract and evaluation design
 
-**Review material prepared (2026-10-04):** [`ADR-0009 candidate 1`](../docs/decisions/0009-aa0-truth-contract-and-evaluation-design.md) consolidates AA000–AA005 with worked unknown-rule arithmetic, versioned logical contracts, corpus/annotation/deletion/statistical policy, synthetic local OCR protocol and scope/unsupported behavior. Owner selected software engineering / English / India and delegated role mapping; the workspace owner is designated product/scoring/privacy/evaluation approver. Explicit package sign-off remains pending. Checkboxes below remain open; preparation is not acceptance. No app code, database migration, engine installation or corpus collection is included.
+**Approval recorded (2026-10-04):** the workspace owner explicitly replied “I approve” to the presented request for approval of [`ADR-0009 candidate 1`](../docs/decisions/0009-aa0-truth-contract-and-evaluation-design.md) for AA000–AA005 and Gate AA0, at reviewed revision `e629a2882b3cc14a63771ae400f4f67a7e4f3f62`. The owner signs as product/scoring/privacy/evaluation approver. Software engineering / English / India, two scores/no aggregate, logical contracts, synthetic corpus governance and local-only OCR evaluation design are accepted without exceptions or threshold relaxations. The six design tasks close in dependency order below. No app code, migration, engine installation or corpus collection is part of this acceptance record.
+
+**Active next task:** AA010/AA011 conformity review against the frozen logical contracts and rerun scoped acceptance verification before new dependent implementation. AA1 stays incomplete. Independent annotation/adjudication assignments before collection and local host/resource/isolation/cost checks before OCR execution remain later prerequisites. Real-data reuse, managed OCR, production flags and Gate A4 remain unauthorized/open.
+
+**Assistant verification (2026-10-04):** `npm run verify:ci` passed: registry signatures, secret/alert/container checks, formatting, lint, 54 Vitest files / 226 tests, typecheck, production build, synthetic load/restore, Phase 5 benchmark, all 45 browser tests and zero production dependency vulnerabilities. `npm run benchmark:native-layout` separately passed both pinned-fixture tests. Approval-reference/link/arithmetic checks passed: 96 local links, six contract versions, eight AA0 task/gate checks, consistent active routing and AA1 acceptance kept open; changed ADR formatting and Git whitespace checks passed. These verify existing regression behavior and AA0 design closure, not OCR execution, representative calibration, AA1 conformity or production readiness. No thresholds or production flags changed.
 
 #### AA000: Approve capability map, non-goals, and claim ladder
 
 **Dependencies:** A2; **Likely files:** `ARCHITECTURE.md`, Accuracy-v2 spec/subplan; **Scope:** S
 
-- [ ] Product, scoring, privacy, and evaluation owners approve capability boundaries and the five claim levels.
+- [x] Product, scoring, privacy, and evaluation owners approve capability boundaries and the five claim levels.
 - **Verify:** dated approval names allowed product language and explicitly prohibits employer-probability, universal-ATS, and automatic-hiring claims.
 
 #### AA001: Approve score semantics and legacy treatment
 
 **Dependencies:** AA000; **Likely files:** ADR-0006, Accuracy-v2 spec, migration/UX decision note; **Scope:** S
 
-- [ ] Approve score names, dimensions, weights-as-hypotheses, unknown/not-evaluated behavior, evidence gates, and treatment of historical scores.
+- [x] Approve score names, dimensions, weights-as-hypotheses, unknown/not-evaluated behavior, evidence gates, and treatment of historical scores.
 - **Verify:** worked examples prove no skipped rule receives free points and no LLM output is authoritative numeric input.
 
 #### AA002: Freeze Accuracy-v2 contracts
 
 **Dependencies:** AA001; **Likely files:** Accuracy-v2 spec, schema/API contract docs, ADR-0007; **Scope:** M
 
-- [ ] Freeze versioned evidence, canonical resume, requirement, score, suggestion, and artifact state contracts.
+- [x] Freeze versioned evidence, canonical resume, requirement, score, suggestion, and artifact state logical contracts in ADR-0009; runtime adoption remains later implementation.
 - **Verify:** contract review covers IDs, provenance, confidence, versioning, authorization, retention, and failure/unknown states.
 
 #### AA003: Approve corpus and annotation governance
 
 **Dependencies:** AA000; **Likely files:** `CONSTRAINTS.md`, evaluation plan, annotation handbook, privacy data map; **Scope:** M
 
-- [ ] Approve provenance, consent/de-identification, retention, two-annotator/adjudication process, partitions, segment taxonomy, and statistical reporting.
+- [x] Approve provenance, consent/de-identification, retention, two-annotator/adjudication process, partitions, segment taxonomy, and statistical reporting.
 - **Verify:** privacy owner approves access/deletion controls; evaluation owner approves agreement and confidence-interval method before data collection.
 
 #### AA004: Approve document/OCR provider bake-off
 
 **Dependencies:** AA002, AA003; **Likely files:** provider evaluation protocol, security/privacy review, cost ceiling; **Scope:** S
 
-- [ ] Approve representative fixtures, normalized output contract, accuracy/latency/cost/privacy measures, regions, failure policy, and exit boundary.
+- [x] Approve representative fixtures, normalized output contract, accuracy/latency/cost/privacy measures, local-only processing boundary, failure policy, and exit boundary.
 - **Verify:** protocol can compare native extraction and candidate providers without binding production to a vendor.
 
-**Proposal prepared (2026-10-04):** [`ADR-0008`](../docs/decisions/0008-selective-ocr-evaluation.md) compares native/self-hosted Tesseract, Google online OCR, AWS Textract and Azure Read using first-party sources. After the owner clarified Google Cloud is not in use, it recommends self-hosted Tesseract in the existing worker, no new cloud account and no external OCR disclosure. It defines a synthetic manifest/contract, selective routing, local retention controls, bounded attempts/estimated compute costs and a measured exit decision. Preparation is authorized, not runtime changes or paid/data-disclosing evaluation. AA002/AA003 approval, AA004 owner sign-off and worker-host validation remain pending; AA004/AA012 stay unchecked. No provider calls, real resume disclosures, provisioning or OCR enablement occurred.
+**Design accepted (2026-10-04):** [`ADR-0009`](../docs/decisions/0009-aa0-truth-contract-and-evaluation-design.md) accepts the local Tesseract/native evaluation design informed by [`ADR-0008`](../docs/decisions/0008-selective-ocr-evaluation.md). No managed provider or external spend is approved. AA002 logical contracts and AA003 governance design are accepted; actual host/resource/isolation/cost validation remains an AA012 execution prerequisite. AA012 stays unchecked. No provider calls, real resume disclosures, provisioning or OCR enablement occurred in AA0.
 
 #### AA005: Approve first release segment
 
 **Dependencies:** AA001-AA004; **Likely files:** release-scope decision, domain/locale matrix, template matrix; **Scope:** S
 
-- [ ] Select one occupation/domain, locale/language, input mix, and initial PDF/DOCX formats; LaTeX stays later.
+- [x] Select software engineering / English / India, PDF input with gated layout/scan subclasses and initial PDF/DOCX export targets; LaTeX stays later. Explicit unsupported behavior approved.
 - **Verify:** unsupported domains/locales/formats have explicit UI behavior and no generalized claim.
 
 #### Gate AA0: Accuracy-v2 architecture approval
 
-- [ ] Human owners approve AA000-AA005 and change ADR-0006/0007 status only through recorded decisions.
-- [ ] Initial weights remain hypotheses until calibration; documentation creation alone does not pass this gate.
+- [x] Human owners approve AA000-AA005 and change ADR-0006/0007 status only through the recorded ADR-0009 decision, 2026-10-04.
+- [x] Initial weights remain hypotheses until calibration; documentation creation alone does not pass this gate. Explicit workspace-owner approval is recorded above.
 
-### Phase AA1: Document evidence [IMPLEMENTED SLICES; ACCEPTANCE BLOCKED BY AA0]
+### Phase AA1: Document evidence [IMPLEMENTED SLICES; CONFORMITY/ACCEPTANCE REVIEW PENDING]
 
 #### AA010: Persist one native-PDF evidence graph
 
 **Dependencies:** AA0; **Likely files:** evidence schema/migration, extraction service, fixture, tests; **Scope:** M
 
-- [ ] Persist pages, text spans, source method, confidence, and critical contact-field assertions for one native-text PDF. Implementation verified; gate-dependent acceptance pending AA0.
+- [ ] Persist pages, text spans, source method, confidence, and critical contact-field assertions for one native-text PDF. Implementation verified; acceptance pending conformity review against approved AA0 contracts.
 - **Verify:** deterministic integration test reconstructs every assertion from page/span evidence and enforces owner isolation.
 
 **Implementation (2026-10-03):** AA010 stores `native-evidence-v1` in the existing private extraction row, with Unicode code-point offsets and source references for name/email/phone candidates. All candidates are `review_required` with `uncalibrated` confidence; this is not calibrated extraction validity. Other critical fields await later structured-evidence slices. Privacy export includes the new column through its existing owner-filtered read, and deletion inherits the analysis cascade. `NATIVE_EVIDENCE_ENABLED` defaults to false until migration and full Supabase verification pass. Deploy migration `20261003100000_native_evidence_graph.sql` first, run `npm run test:aa010:db`, then opt the worker in. Disabling the flag restores the older RPC call.
@@ -737,7 +741,7 @@ These tasks supplement, rather than retroactively upgrade, the synthetic A3 evid
 
 **Dependencies:** AA010; **Likely files:** layout normalizer, Parse View, API read model, tests; **Scope:** M
 
-- [ ] Normalize page coordinates, word/line blocks, columns, tables, and reading-order warnings for supported native PDFs. Implementation/fixture verification recorded; gate-dependent acceptance pending AA0.
+- [ ] Normalize page coordinates, word/line blocks, columns, tables, and reading-order warnings for supported native PDFs. Implementation/fixture verification recorded; acceptance pending conformity review against approved AA0 contracts.
 - **Verify:** single- and multi-column fixtures meet the reading-order gate and Parse View exposes page-linked evidence accessibly.
 
 **Implemented native-text path (2026-10-04):** `extractPdfForAnalysis({ includeLayout: true, ... })` returns `native-layout-v1` pages with rendered viewport dimensions, normalized top-left approximate font-em text-run boxes, stable page/run IDs, Unicode code-point source offsets, and original PDF source order. Text is unchanged from the legacy extractor. Rotated/unsupported directions, invalid or out-of-page geometry, reversed vertical source order, and separated same-row runs produce explicit review warnings; column/table ambiguity is never silently reordered. The layout pass is sequential, keeps existing byte/page/character/time bounds, caps text items per page, and releases the PDF document. OCR replacement text never inherits native offsets.

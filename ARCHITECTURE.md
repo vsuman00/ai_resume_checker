@@ -1,6 +1,6 @@
 # Resumide Target Architecture
 
-Status: **CANDIDATE B2C FOUNDATION APPROVED; AA0 INCOMPLETE; AA1 IMPLEMENTATION PROVISIONAL; GATE A4 OPEN**
+Status: **CANDIDATE B2C FOUNDATION APPROVED; AA0 DESIGN APPROVED 2026-10-04; AA1 IMPLEMENTATION PROVISIONAL; GATE A4 OPEN**
 Last updated: 2026-10-03
 Canonical execution documents: [`tasks/plan.md`](tasks/plan.md) and [`tasks/todo.md`](tasks/todo.md)
 Accuracy-v2 sources: [`docs/ATS_SCORING_AND_AUTHORING_SPEC.md`](docs/ATS_SCORING_AND_AUTHORING_SPEC.md), [`docs/ATS_SCORING_AND_AUTHORING_RESEARCH.md`](docs/ATS_SCORING_AND_AUTHORING_RESEARCH.md), [`tasks/accuracy-authoring-plan.md`](tasks/accuracy-authoring-plan.md), and [`CONSTRAINTS.md`](CONSTRAINTS.md)
@@ -335,7 +335,7 @@ The first implementation may upload through the web service for simplicity. Dire
 
 ## 11. Scoring architecture
 
-The full target contract is [`docs/ATS_SCORING_AND_AUTHORING_SPEC.md`](docs/ATS_SCORING_AND_AUTHORING_SPEC.md). ADR-0006 is proposed and does not alter shipped score semantics until accepted and implemented.
+The full target contract is [`docs/ATS_SCORING_AND_AUTHORING_SPEC.md`](docs/ATS_SCORING_AND_AUTHORING_SPEC.md), with AA0 logical contracts frozen by [`ADR-0009`](docs/decisions/0009-aa0-truth-contract-and-evaluation-design.md) on 2026-10-04. ADR-0006 design is accepted; shipped score semantics do not change until implementation, calibration and migration are verified.
 
 ### Evidence Confidence
 
@@ -549,13 +549,13 @@ The workspace owner approved the following candidate B2C baseline on 2026-09-09:
 - OCR remains disabled behind an adapter until a provider is separately selected.
 - Portable SQL, storage, and identity adapters preserve a vendor-exit path.
 - The workspace owner holds product, privacy/security, scoring-quality, cost, operations, and release ownership until delegated.
-- The existing A3 result is approved only as a synthetic regression gate. Accuracy-v2 architecture, representative-corpus validity, and industry/vendor claims remain proposed and open.
+- The existing A3 result is approved only as a synthetic regression gate. Accuracy-v2 AA0 design is approved through ADR-0009; representative-corpus validity and industry/vendor claims remain open.
 
 Still required to close Gate A0:
 
 1. Approve maximum analysis duration, retry count, and dead-letter procedure.
-2. Approve ADR-0006 score separation, legacy-score treatment, evidence gating, dimensions/weights, and user-facing claim language. No LLM-generated score weight is proposed.
+2. AA0 design decisions for ADR-0006 are approved through ADR-0009. Numeric weights remain hypotheses; calibration and implementation acceptance are still required. No LLM-generated score weight is approved.
 3. Define the initial B2C payment model and entitlement limits.
-4. Approve the first Accuracy-v2 occupation/domain, locale, OCR/provider bake-off, corpus governance, and artifact-format scope at Gate AA0.
+4. Gate AA0 passed 2026-10-04: software engineering / English / India, synthetic local OCR evaluation, corpus governance and PDF/DOCX export scope. Execution prerequisites and later release gates remain open.
 
-Until those decisions are approved, implementation must preserve current provider and claim boundaries. Accuracy-v2 tasks remain planned and no industry, vendor, or outcome-calibrated claim is authorized.
+Until the remaining A0 decisions and relevant execution/release gates pass, implementation must preserve current provider and claim boundaries. AA0 approval does not approve production or any industry, vendor, or outcome-calibrated claim.

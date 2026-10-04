@@ -20,7 +20,7 @@ Preserve the status vocabulary used by the project: `IMPLEMENTED`, `VERIFIED`, `
 
 ### Accuracy-v2 sequencing guard
 
-Gate AA0 is incomplete. AA000 is the active next task; obtain the explicit recorded acceptance of AA000–AA005 before further AA1 implementation, OCR execution/installation or production enablement. Earlier architectural-direction/AA010-slice approval is not a blanket waiver. AA010/AA011 code and passing tests exist but do not mean phase acceptance. Read the dated sequencing correction in `tasks/todo.md`; do not infer sign-off from “continue,” green CI, proposal preparation or the owner's local-testing environment. Preserve existing implementation/migrations while reviewing them against the eventual frozen contracts; do not reset history or roll back schema without a scoped recovery decision.
+Gate AA0 passed on 2026-10-04 through explicit workspace-owner approval of ADR-0009 candidate 1 at `e629a2882b3cc14a63771ae400f4f67a7e4f3f62`. AA000–AA005 logical design contracts are frozen. Next: review provisional AA010/AA011 against those contracts and rerun their acceptance checks before new dependent implementation. AA1, calibration and production Gate A4 remain open. Local OCR execution requires the approved synthetic-only protocol and host/resource/isolation checks; real-data access and external providers remain unauthorized. Read the sequencing correction and later approval in `tasks/todo.md`; never infer other gate sign-off from “continue” or green CI. Preserve existing implementation/migrations; do not reset history or roll back schema without a scoped recovery decision.
 
 ## Stack and layout
 

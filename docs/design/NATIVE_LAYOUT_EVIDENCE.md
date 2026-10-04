@@ -1,6 +1,6 @@
 # Native layout evidence (AA011)
 
-Status: **IMPLEMENTATION/FIXTURE VERIFIED; PHASE ACCEPTANCE PENDING AA0**. The 2026-10-04 sequencing correction in [`tasks/todo.md`](../../tasks/todo.md) supersedes the earlier claim of AA011 completion. Existing opt-in code/tests are preserved; they do not approve the missing AA0 contracts or authorize further AA1 work.
+Status: **IMPLEMENTATION/FIXTURE VERIFIED; PHASE ACCEPTANCE PENDING CONFORMITY REVIEW**. The 2026-10-04 sequencing correction in [`tasks/todo.md`](../../tasks/todo.md) supersedes the earlier claim of AA011 completion. Gate AA0 subsequently passed through explicit [ADR-0009](../decisions/0009-aa0-truth-contract-and-evaluation-design.md) approval. Existing opt-in code/tests are preserved; conformity with the frozen contracts and AA1 release evidence remain separate acceptance requirements.
 
 ## Contract and supported scope
 

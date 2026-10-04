@@ -21,7 +21,7 @@ The [`decisions/`](decisions/) directory contains the ADRs that record durable a
 - [`decisions/0006-evidence-gated-multidimensional-scoring.md`](decisions/0006-evidence-gated-multidimensional-scoring.md): approved architectural direction for separate evidence confidence, ATS compatibility, and job alignment; calibration and release semantics remain open.
 - [`decisions/0007-canonical-resume-and-verified-rendering.md`](decisions/0007-canonical-resume-and-verified-rendering.md): approved direction for canonical content, immutable versions, renderer adapters, and parse-back verification; detailed contracts and artifact gates remain open.
 - [`decisions/0008-selective-ocr-evaluation.md`](decisions/0008-selective-ocr-evaluation.md): proposed OCR provider comparison, selective-processing contract, privacy/cost limits and approval-gated bake-off; no provider is accepted yet.
-- [`decisions/0009-aa0-truth-contract-and-evaluation-design.md`](decisions/0009-aa0-truth-contract-and-evaluation-design.md): consolidated AA000–AA005 review candidate, worked scoring cases, logical contracts, corpus handbook, local OCR protocol and required approval record; not yet accepted.
+- [`decisions/0009-aa0-truth-contract-and-evaluation-design.md`](decisions/0009-aa0-truth-contract-and-evaluation-design.md): accepted AA000–AA005/Gate AA0 decision, frozen logical contracts, worked scoring cases, corpus handbook, local OCR protocol and dated owner approval; execution/calibration/release gates remain separate.
 
 ### Scoring and authoring research
 

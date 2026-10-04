@@ -2,7 +2,7 @@
 
 ## Status
 
-Architectural direction accepted by the workspace owner on 2026-10-03. Score names, dimensions, confidence gates, corpus calibration, legacy migration details, and release claims still require their concrete acceptance evidence. ADR-0003 remains the deployed score contract until the scored migration is implemented and verified.
+Accepted for AA0 design by the workspace owner on 2026-10-04 through [ADR-0009](0009-aa0-truth-contract-and-evaluation-design.md), following architectural-direction approval on 2026-10-03. Separate scores/no aggregate, unknown-state gates, weights-as-hypotheses, claim boundaries and legacy treatment are approved. Corpus calibration, implementation/migration verification and release claims remain later gates. ADR-0003 remains the deployed score contract until the scored migration is implemented and verified.
 
 ## Date
 
