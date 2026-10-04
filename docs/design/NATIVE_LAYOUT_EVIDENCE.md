@@ -2,6 +2,8 @@
 
 Status: **IMPLEMENTATION/FIXTURE VERIFIED; PHASE ACCEPTANCE PENDING CONFORMITY REVIEW**. The 2026-10-04 sequencing correction in [`tasks/todo.md`](../../tasks/todo.md) supersedes the earlier claim of AA011 completion. Gate AA0 subsequently passed through explicit [ADR-0009](../decisions/0009-aa0-truth-contract-and-evaluation-design.md) approval. Existing opt-in code/tests are preserved; conformity with the frozen contracts and AA1 release evidence remain separate acceptance requirements.
 
+Post-AA0 review (2026-10-04): native source invariants and fixture/browser behavior were reverified, and native contact evidence now has a strict worker-side runtime validator. The persisted formats remain `native-evidence-v1` / `native-layout-v1`, with uncalibrated states and approximate geometry; they are not silently upgraded to the v2 envelope. Full local regression passes with 248 tests and 45 browser tests. OCR runtime isolation, independent corpus annotation and representative extraction validity remain pending; see the AA1 progress/prerequisite record in the todo. No schema, authoritative score, production flag or native source text changed.
+
 ## Contract and supported scope
 
 The opt-in native-PDF path stores validated `native-layout-v1` source evidence: page dimensions, normalized top-left approximate font-em run boxes, Unicode code-point offsets, original PDF source order, and review warnings. The owner-filtered read model returns this evidence only after schema validation. Legacy analyses and OCR replacements may have no native evidence. No new database schema or privileges are required for structure inference.

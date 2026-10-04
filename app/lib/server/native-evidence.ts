@@ -1,4 +1,5 @@
 import { parseContact } from "./parsing/contact";
+import { NativeEvidenceSchema } from "./native-evidence-schema";
 
 // Offsets count Unicode code points, matching PostgreSQL substring semantics.
 // Native text presence is provenance, not calibrated extraction confidence.
@@ -46,12 +47,12 @@ export function buildNativeEvidence(pageTexts: readonly string[]) {
           : null,
     };
   });
-  return {
+  return NativeEvidenceSchema.parse({
     schemaVersion: "native-evidence-v1",
     extractorVersion: "unpdf-v1",
     offsetUnit: "unicode_code_point",
     pages,
     spans,
     assertions,
-  };
+  });
 }
