@@ -766,6 +766,8 @@ These tasks supplement, rather than retroactively upgrade, the synthetic A3 evid
 
 #### AA012: Implement selective OCR adapter slice
 
+**Annotation prerequisite amendment (2026-10-04):** the workspace owner approved [ADR-0010](../docs/decisions/0010-ai-assisted-synthetic-annotation.md) with “Ok” and “yes.” AI-assisted labels with known synthetic generator truth are now permitted for local engineering tests without human annotation assignments (E-002). Every label must disclose AI provenance and unverified human validation; representative release annotation, calibration, numerical thresholds and Gate AA1 are not waived. The earlier missing-human prerequisite applies to representative validation, not this scoped synthetic test collection. Host/isolation/resource/dependency verification remains required before actual OCR execution. AA010/AA011 conformity and AA012–AA015 acceptance remain separately verified tasks.
+
 **Dependencies:** AA004, AA010; **Likely files:** document adapter interface, selected adapter, fixtures, tests; **Scope:** M
 
 - [ ] Detect scanned/mixed pages and invoke OCR only where policy requires it; normalize text, geometry, confidence, and provider metadata.

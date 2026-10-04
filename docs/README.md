@@ -22,6 +22,7 @@ The [`decisions/`](decisions/) directory contains the ADRs that record durable a
 - [`decisions/0007-canonical-resume-and-verified-rendering.md`](decisions/0007-canonical-resume-and-verified-rendering.md): approved direction for canonical content, immutable versions, renderer adapters, and parse-back verification; detailed contracts and artifact gates remain open.
 - [`decisions/0008-selective-ocr-evaluation.md`](decisions/0008-selective-ocr-evaluation.md): proposed OCR provider comparison, selective-processing contract, privacy/cost limits and approval-gated bake-off; no provider is accepted yet.
 - [`decisions/0009-aa0-truth-contract-and-evaluation-design.md`](decisions/0009-aa0-truth-contract-and-evaluation-design.md): accepted AA000–AA005/Gate AA0 decision, frozen logical contracts, worked scoring cases, corpus handbook, local OCR protocol and dated owner approval; execution/calibration/release gates remain separate.
+- [`decisions/0010-ai-assisted-synthetic-annotation.md`](decisions/0010-ai-assisted-synthetic-annotation.md): accepted local synthetic annotation amendment; AI labels are not human validation, and representative release gates remain open.
 
 ### Scoring and authoring research
 

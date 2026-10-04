@@ -54,6 +54,7 @@ These targets apply per released segment, not only in aggregate. A segment inclu
 
 - Development, calibration, and locked test partitions are separate; near-duplicate resumes and templates cannot cross partitions.
 - Critical labels use at least two independent annotators and adjudication. Target inter-annotator agreement is at least 0.80 using an appropriate documented statistic because lower agreement means the rubric is not stable enough to calibrate a score.
+- Scoped local-testing exception E-002 permits AI-assisted labels with known synthetic source truth. Such records explicitly lack independent-human validation; they cannot satisfy the representative release/calibration requirements above or establish human agreement. See [ADR-0010](docs/decisions/0010-ai-assisted-synthetic-annotation.md).
 - Metrics report document-level bootstrap 95% confidence intervals and per-segment results.
 - Sample size is justified through a documented precision/power calculation. The planning floor of roughly 203 independent documents per released segment estimates a 95% binomial success rate within approximately ±3 percentage points at 95% confidence; final analysis must account for clustering and non-binomial metrics.
 - A segment cannot be declared supported when its lower confidence bound misses an approved gate, even if the global aggregate passes.
@@ -77,5 +78,6 @@ These are proposed product targets and must be baselined before enforcement:
 | ID    | Constraint                            | Scope                                 | Reason                                                                          | Owner           | Expires                                |
 | ----- | ------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------- | --------------- | -------------------------------------- |
 | E-001 | Accuracy-v2 benchmark commands do not exist yet | Scoring/authoring initiative | AA010 is authorized; planned accuracy benchmarks still require implementation and representative evidence | Workspace owner | At the relevant Accuracy-v2 release gate |
+| E-002 | Independent human annotation prerequisite | Local AA1 synthetic engineering tests only | Owner approved AI-assisted annotation; record AI provenance, known source truth and unverified human validation. No metric threshold or representative-release requirement is waived. See ADR-0010. | Workspace owner, 2026-10-04 | Before representative release evaluation or any human-validated/domain-validity claim |
 
 No implementation task may add another exception silently.

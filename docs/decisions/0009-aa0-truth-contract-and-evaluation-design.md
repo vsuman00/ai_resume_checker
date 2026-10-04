@@ -4,6 +4,8 @@
 
 **ACCEPTED — candidate 1 approved by the workspace owner on 2026-10-04. Gate AA0 PASSED.** The reviewed revision is `e629a2882b3cc14a63771ae400f4f67a7e4f3f62`. Covers AA000–AA005 in dependency order and freezes their logical design contracts. Existing wire/database contracts are not retroactively upgraded. Existing AA010/AA011 code remains provisional until conformity review and acceptance verification. This is not OCR execution, corpus collection, real-data access, calibration or production release evidence.
 
+Annotation amendment (2026-10-04): [ADR-0010](0010-ai-assisted-synthetic-annotation.md), explicitly approved by the workspace owner, permits AI-assisted annotation with known synthetic ground truth for local engineering tests without human annotation assignments. Original human annotation requirements below remain binding for representative validity; they are not satisfied by AI passes. OCR host/isolation checks and all release gates remain unchanged.
+
 ## Context and decision boundary
 
 The [spec](../ATS_SCORING_AND_AUTHORING_SPEC.md), [architecture](../../ARCHITECTURE.md), [constraints](../../CONSTRAINTS.md), [plan](../../tasks/accuracy-authoring-plan.md), [todo](../../tasks/todo.md), [privacy map](../security/PRIVACY_DATA_MAP.md), and ADRs [0006](0006-evidence-gated-multidimensional-scoring.md), [0007](0007-canonical-resume-and-verified-rendering.md), [0008](0008-selective-ocr-evaluation.md) govern this decision. It supplies their missing review material without replacing their stricter constraints. A2 and AA0 approvals are recorded. Sections written as proposals below are the unchanged candidate-1 substance now accepted for AA0 design; execution prerequisites and later release gates remain in force.
