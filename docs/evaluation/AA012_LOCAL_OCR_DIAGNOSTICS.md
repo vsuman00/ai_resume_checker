@@ -41,3 +41,105 @@ The 24 diagnostics include six translations of clean and mixed fixtures, actual 
 The metric helper supports fixed-seed whole-family bootstrap (10,000 resamples, seed `20261004`), with deterministic regression tests. This dataset has only one family, so a meaningful family-level 95% interval is **null**, reason `fewer_than_two_independent_source_families`, rather than a fabricated narrow interval. Independent human validation and calibration remain not evaluated under ADR-0010.
 
 Exit: **revise and review; no production enablement**. Retain these failing fixtures as regressions. Complete the original independent-family pilot and missing measurements/adverse classes before claiming adapter quality acceptance. AA013 requires immutable reconciliation, persisted review/no-score guards and visible uncertainty; AA014 requires owner-authorized, concurrent-safe audited corrections; AA015 requires its locked benchmark. Their gates remain open. Changing the accepted phase dependencies or redefining completion as engineering-only requires a named owner decision; general continuation is not such a waiver.
+
+## Normal-font accuracy investigation (2026-10-04)
+
+The failed bitmap corpus uses an original 5×7 block glyph alphabet, not a normal
+resume font. That is a useful adverse regression, but not sufficient evidence for
+ordinary printed scans. Its labels, bytes, failed measurements and unchanged
+targets remain intact above. No recovered characters are replaced using truth
+labels. [Tesseract's quality guidance](https://tesseract-ocr.github.io/tessdoc/ImproveQuality.html)
+identifies unusual fonts, resolution and page segmentation as possible causes;
+the comparisons below measure them rather than assuming a setting will help.
+
+`ocr-print-pilot.ts` adds 18 fictional documents across six authored content/layout
+families: clean 300-DPI scans, actual 150-DPI ±0.35° skew/0.3-pixel blur/JPEG-85
+scans, and mixed documents with a native page between two scanned pages. Six
+retained controls produce 24 total documents. Family variants stay together:
+15 development / 3 calibration / 6 declared locked documents. They share one font
+and renderer and remain AI-labelled synthetic engineering data, not independent
+human validation or a representative population.
+
+Source field and exact-position line/code-point labels precede rasterization and
+recognition. Liberation Sans is unmodified, SIL OFL 1.1, SHA-256
+`f8ace1f892b2bd9dc1792ba7f097fa7588f84fed48321480e04de5390828221f`;
+Canvas is pinned to existing version `0.1.77` (MIT), now explicitly declared as a
+development dependency. No font download, host-font substitution, new engine
+dependency or real candidate data is used. Generated raster bytes are explicitly
+platform-bound; authored hashes are pinned independently. Glyph and raster ink
+bounds are checked to reject cropping/blank fixture defects.
+
+Reviewed quality-comparison image:
+`sha256:6fa3e4a4c000c5f70e3689bc51166eaa6fce9c81648da97f01653baafc397b2f`
+(arm64, user `10001:10001`). The pinned base/package/language-data assertions are
+unchanged. Runtime configuration is allowlisted to PSM 3/6 and maximum DPI
+150/300, identified in metadata; no arbitrary engine flags are accepted.
+Production settings are unchanged. Real isolation, cancellation, timeout and
+cleanup smoke checks pass on this image; original block scan error remains 13/76.
+
+The first development comparison (PSM 3 / maximum 300 DPI) fails screening:
+clean CER 0.479846% with family-bootstrap 95% interval [0, 1.036269%]; mixed
+OCR-only CER 0.481232% with interval [0, 1.038961%]. Both interval upper bounds
+exceed the unchanged 1% target. Challenging CER is 0%, interval [0, 0]. Clean and
+mixed exact-position line agreement is 94.6581%, below 98%; challenging is 100%.
+Exact critical-value text recovery is 22/24 clean, 22/24 mixed and 24/24
+challenging, **not structured-field precision/recall**.
+Development manifest: `42455794d6e025af3e55ea0ad3c47e788a2f09e3976c48965f8cefe632540d6b`;
+first comparison receipt: `d216e30105d10d5749ba4504cc4e6d1472564182e9ad7cfad4e1e9534ba9de9f`.
+
+Exact-position agreement now penalizes missing, reversed and extra lines/pages;
+the previous LCS metric remains separately labelled. `--require-quality` checks
+CER interval upper bounds and the 98% single-column line floor, not full AA012
+acceptance. No supported multi-column claim is made. `--manifest-only` freezes
+sources/settings without Docker; locked recognition requires a matching
+`--lock-receipt=<sha256>` binding sources, labels, image and configuration.
+That receipt must be recorded before recognition, not manufactured after results.
+
+Successful runs report measured child CPU and actual renderer/recognition starts.
+RSS is the maximum **individual child**, not whole-container peak; failed-attempt
+resources and whole-container peak remain unknown. The first development run
+observed 13 renderer and 13 recognition starts (including blank), 8,388.593 ms
+child CPU and 117,460,992 bytes maximum single-child RSS. Fees remain zero,
+local compute price unknown. Neither raw assets nor recovered text are persisted.
+
+### Development selection and pre-recognition lock
+
+All four development settings used the same 15 sources and unchanged labels:
+
+| PSM / maximum DPI | Clean CER | Challenging CER | Mixed OCR CER | Clean / mixed exact-position agreement | Decision                                |
+| ----------------- | --------: | --------------: | ------------: | -------------------------------------: | --------------------------------------- |
+| 3 / 300           | 0.479846% |              0% |     0.481232% |                               94.6581% | Fails                                   |
+| 6 / 300           | 0.479846% |              0% |     0.481232% |                               94.6581% | Fails                                   |
+| 3 / 150           |        0% |              0% |            0% |                                   100% | Selected for held-out engineering check |
+| 6 / 150           |        0% |              0% |            0% |                                   100% | No measured text advantage over PSM 3   |
+
+The two 150-DPI settings have CER bootstrap intervals [0, 0], full original-page
+coverage and 24/24 critical source values recovered in each segment. This is an
+observation on three authored development families, not a population guarantee.
+PSM 3 is retained because changing to uniform-block segmentation adds no measured
+benefit here and is not suitable as a blanket multi-column policy. Resolution
+sensitivity is measured; a specific glyph-level causal mechanism is not proven.
+The selected maximum-DPI cap is **test-only**, not a general recommendation to
+downsample every resume. No labels, templates or quality floors changed after
+development comparisons.
+
+Selected development receipt:
+`2edfa33d38e696478da89d62b7637a6688fdc79f50a3a1a4fc2af5dda4c123b1`.
+Other comparison receipts: PSM 6 / 300
+`312cf48977f7f380244f65934e147d84b000852a35d426ad631ab966d54178f0`;
+PSM 6 / 150
+`b6ed506fddf0cc9f2434cb15e09640aae63c4354d5de47f216fe8e761f354cbb`.
+
+**Frozen before any held-out recognition:** PSM 3 / maximum DPI 150, reviewed
+arm64 image above, `normal-font-pdf-v1`, held-out families `epsilon-quality` and
+`zeta-data`. `--manifest-only` completed without Docker/recognition, binding six
+held-out documents to source/label manifest
+`a73a59315970aa80936ef37eaded868f267dca70cbcc08b1268d645d7c130c03`
+and execution receipt
+`d753f080ab6a23291bf00c6557c81e533b3a89f4da8cf20327a99f0cc1bc4a7a`.
+Platform: darwin/arm64, zlib 1.2.12. These hashes cannot be reused for a different
+platform/image/settings/source. A changed held-out configuration requires a new
+development decision and new untouched sources; this receipt cannot authorize
+tuning on these six outputs. Their authored family hashes were already pinned
+before all OCR comparisons. Calibration-family recognition remains separate from
+confidence calibration and representative validation.

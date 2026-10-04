@@ -4,7 +4,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { promisify } from "node:util";
 import {
   createLocalContainerOcrAdapter,
-  LOCAL_OCR_VERSIONS,
+  type LocalOcrEvaluationConfig,
 } from "../app/lib/server/ocr/local-container";
 import {
   extractPdfTextLayers,
@@ -16,6 +16,7 @@ import {
   type SelectiveOcrRequest,
 } from "../app/lib/server/ocr/selective";
 import { createOcrDiagnosticPilot } from "../tests/fixtures/ocr-pilot";
+import { createOcrPrintPilot } from "../tests/fixtures/ocr-print-pilot";
 import {
   evaluateOcrDocument,
   summarizeOcrSegment,
@@ -28,10 +29,40 @@ assert.match(
   /^sha256:[a-f0-9]{64}$/u,
   "Pass the reviewed immutable local image ID; no images are built or downloaded.",
 );
+const flags = process.argv.slice(3);
+const seen = new Set<string>();
+for (const flag of flags) {
+  assert.match(
+    flag,
+    /^(--require-quality|--manifest-only|--print-pilot|--partition=(development|calibration|locked)|--psm=(3|6)|--dpi=(150|300)|--lock-receipt=[a-f0-9]{64})$/u,
+    "Unknown checker option",
+  );
+  const key = flag.split("=")[0];
+  assert.ok(!seen.has(key), "Duplicate checker option");
+  seen.add(key);
+}
+const printPilot = flags.includes("--print-pilot");
+const partitionFlag = flags.find((flag) => flag.startsWith("--partition="));
 assert.ok(
-  process.argv.slice(3).every((arg) => arg === "--require-quality"),
-  "Unknown checker option",
+  printPilot === Boolean(partitionFlag),
+  "Print pilot requires an explicit partition; diagnostic corpus has development only",
 );
+const partition = partitionFlag?.split("=")[1] ?? "development";
+const lockReceipt = flags
+  .find((flag) => flag.startsWith("--lock-receipt="))
+  ?.split("=")[1];
+assert.ok(
+  !lockReceipt || (printPilot && partition === "locked"),
+  "Lock receipt is valid only for the locked print partition",
+);
+assert.ok(
+  partition !== "locked" || flags.includes("--manifest-only") || lockReceipt,
+  "Locked execution requires the previously frozen receipt",
+);
+const evaluationConfig: LocalOcrEvaluationConfig = {
+  psm: flags.includes("--psm=6") ? 6 : 3,
+  maxDpi: flags.includes("--dpi=150") ? 150 : 300,
+};
 const docker = promisify(execFile);
 async function ownedContainers() {
   const { stdout } = await docker(
@@ -52,7 +83,33 @@ async function assertCleanup(baseline: string[]) {
   );
 }
 
-const fixtures = createOcrDiagnosticPilot();
+const allFixtures = printPilot
+  ? await createOcrPrintPilot()
+  : createOcrDiagnosticPilot();
+// Rendered variants must stay with their authored family before any recognition.
+const familyPartitions = new Map<string, Set<string>>();
+for (const fixture of allFixtures) {
+  const partitions =
+    familyPartitions.get(fixture.manifest.sourceFamily) ?? new Set<string>();
+  partitions.add(fixture.manifest.partition);
+  familyPartitions.set(fixture.manifest.sourceFamily, partitions);
+}
+assert.ok(
+  [...familyPartitions.values()].every((partitions) => partitions.size === 1),
+  "Source-family partition leakage",
+);
+const fixtures = allFixtures.filter(
+  (fixture) => fixture.manifest.partition === partition,
+);
+assert.ok(fixtures.length, "Selected partition has no fixtures");
+const datasetId = printPilot
+  ? "normal-font-pdf-v1"
+  : "block-glyph-diagnostic-v1";
+const selectedVersions = createLocalContainerOcrAdapter({
+  bytes: fixtures[0].bytes,
+  imageId,
+  evaluationConfig,
+}).versions;
 // Bind every authored hash and label before the first recognition. This is a
 // development receipt, NOT a held-out lock or independent-family partition.
 const sourceManifest = fixtures.map((fixture) => ({
@@ -66,6 +123,45 @@ const sourceManifest = fixtures.map((fixture) => ({
 const manifestSha256 = createHash("sha256")
   .update(JSON.stringify(sourceManifest))
   .digest("hex");
+const evaluationReceipt = Object.freeze({
+  datasetId,
+  partition,
+  imageId,
+  evaluationConfig: Object.freeze({ ...evaluationConfig }),
+  manifestSha256,
+  versions: selectedVersions,
+});
+const evaluationReceiptSha256 = createHash("sha256")
+  .update(JSON.stringify(evaluationReceipt))
+  .digest("hex");
+if (lockReceipt)
+  assert.equal(
+    lockReceipt,
+    evaluationReceiptSha256,
+    "Frozen receipt mismatches source, configuration or immutable image",
+  );
+if (flags.includes("--manifest-only")) {
+  process.stdout.write(
+    JSON.stringify(
+      {
+        status: "manifest_only_no_recognition",
+        evaluationReceipt,
+        evaluationReceiptSha256,
+        sourceManifest,
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+  process.exit(0);
+}
+process.stdout.write(
+  JSON.stringify({
+    status: "evaluation_receipt_pre_execution",
+    ...evaluationReceipt,
+    evaluationReceiptSha256,
+  }) + "\n",
+);
 const baseline = await ownedContainers();
 const results: Array<
   OcrObservation & { segment: string; [key: string]: unknown }
@@ -119,7 +215,7 @@ for (const fixture of fixtures) {
   };
   const adapter: LocalOcrAdapter = fixture.providerPageInjection
     ? {
-        versions: LOCAL_OCR_VERSIONS,
+        versions: selectedVersions,
         async recognize() {
           return {
             durationMs: 1,
@@ -136,7 +232,11 @@ for (const fixture of fixtures) {
           };
         },
       }
-    : createLocalContainerOcrAdapter({ bytes: fixture.bytes, imageId });
+    : createLocalContainerOcrAdapter({
+        bytes: fixture.bytes,
+        imageId,
+        evaluationConfig,
+      });
   const outcome = await runSelectiveLocalOcr(
     request,
     adapter,
@@ -188,6 +288,10 @@ for (const fixture of fixtures) {
   const recoveredLabels = fixture.labels.filter((label) =>
     (actual[label.pageNumber - 1] ?? "").includes(label.value),
   ).length;
+  const resourceUsage =
+    outcome.status === "review_required" || outcome.status === "insufficient"
+      ? (outcome.resourceUsage ?? null)
+      : null;
   results.push({
     id: fixture.manifest.id,
     family: fixture.manifest.sourceFamily,
@@ -201,6 +305,14 @@ for (const fixture of fixtures) {
     errorCode: outcome.status === "failed" ? outcome.code : null,
     selectedPages: request.selectedPages.map((page) => page.pageNumber),
     wallMs: performance.now() - started,
+    resourceUsage,
+    resourceUsageReason: resourceUsage
+      ? null
+      : outcome.status === "failed"
+        ? "failed_attempt_resources_not_measured"
+        : "no_successful_child_rusage_observation",
+    resourceUsageScope:
+      "child_cpu_sum_and_max_single_child_rss_not_whole_container_peak",
     // Expected workload, not measured engine attempts or billable usage.
     expectedRuntimeAttempts:
       fixture.providerPageInjection ||
@@ -225,26 +337,71 @@ for (const fixture of fixtures) {
   });
 }
 const completedAt = new Date();
+const observedUsage = results.flatMap((row) =>
+  row.resourceUsage
+    ? [
+        row.resourceUsage as NonNullable<
+          Extract<
+            Awaited<ReturnType<typeof runSelectiveLocalOcr>>,
+            { schemaVersion: "ocr-evidence-v1" }
+          >["resourceUsage"]
+        >,
+      ]
+    : [],
+);
 const report = {
   status: "diagnostic_execution_completed",
   imageId,
-  versions: LOCAL_OCR_VERSIONS,
+  versions: selectedVersions,
+  datasetId,
+  evaluationConfig,
+  evaluationReceipt,
+  evaluationReceiptSha256,
+  suppliedLockReceipt: lockReceipt ?? null,
+  requireQualityScope:
+    "CER_and_exact_position_single_column_screening_only_not_AA012_acceptance",
   manifestSha256,
   completedAt: completedAt.toISOString(),
   rawExpiresAt: new Date(completedAt.getTime() + 30 * 86400000).toISOString(),
   persistedRawAssets: false,
   datasetType: "synthetic_engineering_only",
-  partition: "development",
+  partition,
   humanValidation: "not_evaluated",
-  independentFamilyProtocol: "not_satisfied",
+  independentFamilyProtocol: printPilot
+    ? "source_family_disjoint_synthetic_partitions_declared_not_independent_human_validation"
+    : "not_satisfied",
   representativeValidity: "not_evaluated",
   fullAA1Gate: "open",
   selection: "revise_and_review_no_production_enablement",
   automaticRetries: 0,
   runtimeAttemptAccounting:
-    "expected_workload_only_not_observed_engine_attempts",
-  cpuTime: { value: null, reason: "not_measured" },
-  peakMemory: { value: null, reason: "not_measured" },
+    "successful_child_starts_observed_when_rusage_present_failed_attempts_unknown_expected_workload_not_usage",
+  cpuTime: {
+    value: observedUsage.length
+      ? observedUsage.reduce((sum, usage) => sum + usage.cpuTimeMs, 0)
+      : null,
+    unit: "ms",
+    scope: "sum_of_observed_successful_child_processes_only",
+    observedDocuments: observedUsage.length,
+    unmeasuredDocuments: results.length - observedUsage.length,
+  },
+  maxSingleChildRssBytes: {
+    value: observedUsage.length
+      ? Math.max(...observedUsage.map((usage) => usage.maxChildRssBytes))
+      : null,
+    scope: "maximum_individual_child_rss_not_whole_container_peak",
+    observedDocuments: observedUsage.length,
+  },
+  observedChildStarts: {
+    renderer: observedUsage.length
+      ? observedUsage.reduce((sum, usage) => sum + usage.rendererCalls, 0)
+      : null,
+    recognition: observedUsage.length
+      ? observedUsage.reduce((sum, usage) => sum + usage.recognitionCalls, 0)
+      : null,
+    scope: "successful_observations_only_failed_attempts_unknown",
+  },
+  peakMemory: { value: null, reason: "whole_container_peak_not_measured" },
   structuredFieldPrecisionRecall: {
     value: null,
     reason: "field_extractor_not_evaluated",
@@ -260,6 +417,7 @@ const report = {
         })),
       segment === "challenging" ? 0.03 : 0.01,
     ),
+    minimumExactPositionLineAgreement: 0.98,
   })),
   controls: results.filter((row) => row.segment === "controls"),
   results,
@@ -267,6 +425,12 @@ const report = {
 process.stdout.write(JSON.stringify(report, null, 2) + "\n");
 if (
   process.argv.includes("--require-quality") &&
-  report.segments.some((segment) => segment.screeningGate !== "passed")
+  report.segments.some(
+    (segment) =>
+      segment.screeningGate !== "passed" ||
+      segment.macroExactPositionLineAgreement === null ||
+      segment.macroExactPositionLineAgreement <
+        segment.minimumExactPositionLineAgreement,
+  )
 )
   process.exitCode = 1;

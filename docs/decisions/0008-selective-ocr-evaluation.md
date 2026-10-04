@@ -29,10 +29,12 @@ Reviewed dependencies: Debian `bookworm-slim` base digest `3783cc01769c7b2b1b83a
 On macOS external volumes with AppleDouble/xattr failures, build using an explicit three-file context from `scripts/ocr-runtime`:
 
 ```sh
-COPYFILE_DISABLE=1 tar --no-xattrs -cf - Dockerfile runner.py .dockerignore | docker build --pull=false --tag resumide-ocr:aa012-local-v1 -
+COPYFILE_DISABLE=1 tar --no-xattrs --format=ustar -cf - Dockerfile runner.py .dockerignore | docker build --pull=false --tag resumide-ocr:aa012-local-v1 -
 ```
 
 Then inspect its immutable ID with `docker image inspect resumide-ocr:aa012-local-v1 --format '{{.Id}}'` and pass that ID to `npm run test:ocr:local -- sha256:...`. The checker does not pull/build an image, load `.env`, call Supabase or send data to a managed provider. It emits metadata/aggregate errors only, not recovered text. Its success label means runtime engineering checks passed, **not** transcription accuracy or AA1 acceptance. The initial three same-family development fixtures and ten-page repeated cancellation workload cannot substitute for the 24-document pilot or locked representative corpus.
+
+The [normal-font accuracy investigation](../evaluation/AA012_LOCAL_OCR_DIAGNOSTICS.md#normal-font-accuracy-investigation-2026-10-04) uses a separately reviewed image with the same pinned dependencies and unchanged isolation. Test-only PSM 3/6 and maximum DPI 150/300 are strictly allowlisted, with non-default configuration identified in versions. Optional successful `resourceUsage` reports child CPU, actual renderer/recognition starts and Linux maximum individual-child RSS; it is not whole-container peak memory, a billed compute price or failed-attempt accounting. Validators reject malformed/counter-inconsistent observations. Held-out execution must match a pre-recorded source/configuration/image receipt; a manifest-only mode does not reach Docker. These engineering comparisons do not amend numerical floors, production defaults, accepted privacy scope or phase gates.
 
 ## Context
 

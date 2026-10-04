@@ -14,3 +14,14 @@ must not contain real candidate PII, credentials, or confidential job data.
 
 Add each new fixture here with its origin, expected parser/scoring outcome, and
 PII classification before using it in automated tests.
+
+`ocr-print-pilot.ts`: 18 original fictional English/India software-engineering
+documents from six authored content/layout families, plus six retained diagnostic
+controls. Existing unmodified Liberation Sans (SIL OFL 1.1, pinned SHA-256) is
+rasterized by pinned Canvas 0.1.77; no downloaded font or host-font selection.
+Clean 300-DPI, actual 150-DPI skew/blur/JPEG and native-middle mixed variants share
+their family partition: 15 development / 3 calibration / 6 locked documents.
+Labels and ordered line/code-point truth precede rasterization and recognition;
+byte hashes are locked before each run and are explicitly platform-bound.
+AI-only engineering annotation; human/representative validation not evaluated.
+PII: none. Same font/renderer across families remains a generalization limitation.

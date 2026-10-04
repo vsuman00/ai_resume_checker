@@ -45,7 +45,9 @@ export function evaluateOcrDocument(expected: string[], actual: string[]) {
     nonblankPages = 0,
     coveredPages = 0,
     lineCount = 0,
-    matchedLines = 0;
+    matchedLines = 0,
+    exactPositionLines = 0,
+    positionLineDenominator = 0;
   expected.forEach((text, page) => {
     const reference = Array.from(normalized(text));
     const recovered = Array.from(normalized(actual[page] ?? ""));
@@ -57,14 +59,27 @@ export function evaluateOcrDocument(expected: string[], actual: string[]) {
     }
     const lines = text.split(/\n/u).map(normalized).filter(Boolean);
     lineCount += lines.length;
+    const actualLines = (actual[page] ?? "")
+      .split(/\n/u)
+      .map(normalized)
+      .filter(Boolean);
+    positionLineDenominator += Math.max(lines.length, actualLines.length);
+    exactPositionLines += lines.filter(
+      (line, index) => line === actualLines[index],
+    ).length;
     matchedLines += orderedMatches(
       lines,
       (actual[page] ?? "").split(/\n/u).map(normalized).filter(Boolean),
     );
   });
   // Extra output pages also count as insertions, not silent exclusions.
-  for (const text of actual.slice(expected.length))
+  for (const text of actual.slice(expected.length)) {
     errors += Array.from(normalized(text)).length;
+    positionLineDenominator += text
+      .split(/\n/u)
+      .map(normalized)
+      .filter(Boolean).length;
+  }
   return {
     errors,
     referenceCharacters,
@@ -73,6 +88,12 @@ export function evaluateOcrDocument(expected: string[], actual: string[]) {
       : null,
     pageCoverage: nonblankPages ? coveredPages / nonblankPages : null,
     orderedLineAgreement: lineCount ? matchedLines / lineCount : null,
+    referenceLines: lineCount,
+    exactPositionLines,
+    positionLineDenominator,
+    exactPositionLineAgreement: positionLineDenominator
+      ? exactPositionLines / positionLineDenominator
+      : null,
   };
 }
 
@@ -150,6 +171,9 @@ export function summarizeOcrSegment(
     macroPageAvailability: mean(rows.map((row) => row.metrics.pageCoverage)),
     macroOrderedLineAgreement: mean(
       rows.map((row) => row.metrics.orderedLineAgreement),
+    ),
+    macroExactPositionLineAgreement: mean(
+      rows.map((row) => row.metrics.exactPositionLineAgreement),
     ),
     maximumCer,
     screeningGate:

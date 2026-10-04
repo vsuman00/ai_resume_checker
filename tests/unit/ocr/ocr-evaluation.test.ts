@@ -5,6 +5,30 @@ import {
 } from "../../fixtures/ocr-evaluation";
 
 describe("OCR diagnostic metrics", () => {
+  it("penalizes extra lines and pages in exact-position agreement", () => {
+    expect(
+      evaluateOcrDocument(["A"], ["A\nB"]).exactPositionLineAgreement,
+    ).toBe(0.5);
+    expect(
+      evaluateOcrDocument(["A"], ["A", "B"]).exactPositionLineAgreement,
+    ).toBe(0.5);
+  });
+  it("distinguishes exact-position lines from subsequence ordering", () => {
+    const result = evaluateOcrDocument(["FIRST\nSECOND"], ["SECOND\nFIRST"]);
+    expect(result).toMatchObject({
+      exactPositionLineAgreement: 0,
+      referenceLines: 2,
+      exactPositionLines: 0,
+    });
+  });
+  it("counts missing lines as errors for exact-position agreement", () => {
+    const result = evaluateOcrDocument(["A\nB\nC"], ["A\nC"]);
+    expect(result).toMatchObject({
+      exactPositionLineAgreement: 1 / 3,
+      referenceLines: 3,
+      exactPositionLines: 1,
+    });
+  });
   it("counts Unicode code points and normalizes only whitespace", () => {
     const result = evaluateOcrDocument(["A 😀\nB"], ["A X B"]);
     expect(result.errors).toBe(1);
