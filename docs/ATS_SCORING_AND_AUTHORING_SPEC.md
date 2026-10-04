@@ -4,6 +4,8 @@ Status: **DIRECTION APPROVED 2026-10-03; AA0 ACCEPTANCE INCOMPLETE; AA1 IMPLEMEN
 Module family: `document-evidence`, `job-intelligence`, `scoring-evaluation`, `resume-authoring`, `verified-rendering`
 Research basis: [`ATS_SCORING_AND_AUTHORING_RESEARCH.md`](ATS_SCORING_AND_AUTHORING_RESEARCH.md)
 
+AA0 review candidate: [`ADR-0009`](decisions/0009-aa0-truth-contract-and-evaluation-design.md) supplies worked score semantics, versioned logical contracts, annotation/governance protocol, local-only OCR evaluation and first-segment proposal. It remains proposed until explicit named approval; no runtime contract is frozen by its creation.
+
 ## 1. Objective
 
 Build a candidate-first workflow that can:

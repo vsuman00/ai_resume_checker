@@ -659,11 +659,13 @@ The assistant incorrectly extended the limited direction/AA010 approval into AA0
 | AA002 | Proposed schemas/contracts and limited native evidence implementation | Reviewed, frozen versioned contracts for all named objects and approval |
 | AA003 | Proposed evaluation/privacy requirements | Corpus provenance, partitions, retention, annotation/adjudication and statistical-policy approval |
 | AA004 | ADR-0008 provider/evaluation proposal; local-test scope clarified | AA002/AA003 completion, approved local OCR contract, resource/cost/privacy protocol and sign-off |
-| AA005 | Candidate-first, PDF/DOCX-first direction | Named first occupation/domain, locale/language, input mix, formats and unsupported behavior approval |
+| AA005 | Owner selected software engineering / English / India on 2026-10-04; PDF/DOCX-first direction | Input mix, formats and unsupported behavior approval |
 
 These tasks supplement, rather than retroactively upgrade, the synthetic A3 evidence.
 
 ### Phase AA0: Truth contract and evaluation design
+
+**Review material prepared (2026-10-04):** [`ADR-0009 candidate 1`](../docs/decisions/0009-aa0-truth-contract-and-evaluation-design.md) consolidates AA000–AA005 with worked unknown-rule arithmetic, versioned logical contracts, corpus/annotation/deletion/statistical policy, synthetic local OCR protocol and scope/unsupported behavior. Owner selected software engineering / English / India and delegated role mapping; the workspace owner is designated product/scoring/privacy/evaluation approver. Explicit package sign-off remains pending. Checkboxes below remain open; preparation is not acceptance. No app code, database migration, engine installation or corpus collection is included.
 
 #### AA000: Approve capability map, non-goals, and claim ladder
 
