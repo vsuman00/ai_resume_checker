@@ -1,6 +1,6 @@
 # Spec: Evidence-grounded scoring and job-specific resume authoring
 
-Status: **ARCHITECTURAL DIRECTION APPROVED 2026-10-03; AA010 AUTHORIZED; DETAILED QUALITY/RELEASE DECISIONS OPEN**
+Status: **DIRECTION APPROVED 2026-10-03; AA0 ACCEPTANCE INCOMPLETE; AA1 IMPLEMENTATION PROVISIONAL; DETAILED CONTRACTS/DECISIONS NOT FROZEN**
 Module family: `document-evidence`, `job-intelligence`, `scoring-evaluation`, `resume-authoring`, `verified-rendering`
 Research basis: [`ATS_SCORING_AND_AUTHORING_RESEARCH.md`](ATS_SCORING_AND_AUTHORING_RESEARCH.md)
 

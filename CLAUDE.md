@@ -12,8 +12,15 @@ Before changing implementation, read these files in order:
 4. [`tasks/todo.md`](tasks/todo.md) for executable task status and evidence.
 5. [`docs/README.md`](docs/README.md) for the documentation map and verification sources.
 6. The relevant ADR in [`docs/decisions/`](docs/decisions/).
+7. Applicable design documents in [`docs/design/`](docs/design/), including the blueprint and feature contract for the surface being changed.
+
+Standing workspace-owner instruction (2026-10-04): before building anything, follow the applicable plan, todo, architecture, constraints, design and decision documents. Identify the active task and verify its dependencies/approval gates before editing implementation. Resolve contradictions or missing decisions with the owner; do not silently substitute your own sequence, scope or architecture. A request to continue is not permission to skip a documented prerequisite. Update status with implementation, verification and approval evidence kept distinct.
 
 Preserve the status vocabulary used by the project: `IMPLEMENTED`, `VERIFIED`, `PARTIAL`, `TARGET`, `DEFERRED`, and `BLOCKED`. Documentation is not evidence by itself. Do not mark a phase or gate complete without its named automated evidence and required human approval. Hosted deployment, restore, notification sink, rollback, policy, and deployment-owned security controls remain separate external gates where noted.
+
+### Accuracy-v2 sequencing guard
+
+Gate AA0 is incomplete. AA000 is the active next task; obtain the explicit recorded acceptance of AA000–AA005 before further AA1 implementation, OCR execution/installation or production enablement. Earlier architectural-direction/AA010-slice approval is not a blanket waiver. AA010/AA011 code and passing tests exist but do not mean phase acceptance. Read the dated sequencing correction in `tasks/todo.md`; do not infer sign-off from “continue,” green CI, proposal preparation or the owner's local-testing environment. Preserve existing implementation/migrations while reviewing them against the eventual frozen contracts; do not reset history or roll back schema without a scoped recovery decision.
 
 ## Stack and layout
 

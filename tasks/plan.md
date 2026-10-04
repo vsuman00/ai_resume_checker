@@ -1,6 +1,6 @@
 # Implementation Plan: Resumide Reliable Product to Enterprise Platform
 
-Status: **PARTIAL; ACCURACY-V2 ARCHITECTURAL DIRECTION APPROVED; AA010 AUTHORIZED; CONCRETE AA0 DECISIONS AND GATES A0/A4 OPEN**
+Status: **PARTIAL; AA0 INCOMPLETE; AA000 ACTIVE; AA1 IMPLEMENTATION PROVISIONAL; GATES A0/A4 OPEN**
 Architecture: [`../ARCHITECTURE.md`](../ARCHITECTURE.md)
 Executable checklist: [`todo.md`](todo.md)
 Accuracy-v2 subplan: [`accuracy-authoring-plan.md`](accuracy-authoring-plan.md)

@@ -640,11 +640,26 @@ telemetry are implemented with redaction and low-cardinality route labels.
 - [ ] Security/privacy review, restore drill, SLO dashboards, staging E2E, rollback rehearsal, and policy approval are attached.
 - [ ] Human approves Gate A4.
 
-## Phase 7A: Accuracy-v2, authoring, and verified artifacts [DIRECTION APPROVED; AA010 IMPLEMENTED]
+## Phase 7A: Accuracy-v2, authoring, and verified artifacts [AA0 INCOMPLETE; AA1 IMPLEMENTATION PROVISIONAL]
 
 ### Approval record — 2026-10-03
 
-The workspace owner approved the proposed Accuracy-v2 architecture and the recommended first implementation slice with “I approve.” This authorizes AA010 native-PDF evidence storage and the architectural direction in ADR-0006/0007. It does not resolve the unnamed first release domain/locale, approve scoring weights, select an OCR provider, authorize real-data collection, or close production Gate A4. AA000-AA005 retain unchecked acceptance items where concrete decisions or contracts are still missing. Implementation may proceed on the approved native-PDF foundation; dependent provider, calibration, corpus, and release work waits for those decisions.
+The workspace owner approved the proposed Accuracy-v2 architecture and the recommended AA010 first implementation slice with “I approve.” This records approval of that limited native-PDF slice and the architectural direction in ADR-0006/0007, not completion or waiver of Gate AA0. It does not resolve the unnamed first release domain/locale, approve scoring weights, select an OCR provider, authorize real-data collection, or close production Gate A4. AA000-AA005 remain unchecked where concrete decisions, frozen contracts or named approvals are missing.
+
+### Sequencing correction — 2026-10-04
+
+The assistant incorrectly extended the limited direction/AA010 approval into AA011 implementation and reported AA011 as complete despite AA0 being open. Passing implementation tests does not satisfy its prerequisite gate. AA010/AA011 implementation and verification evidence are retained below, but their phase acceptance is pending AA0; neither AA0 nor AA1 is complete. Existing additive migrations and Git history are preserved, not destructively rolled back. No further AA1 implementation, OCR execution/installation, contract adoption, real-data collection or production enablement proceeds until AA000–AA005 and Gate AA0 receive their required recorded approvals. General “continue,” preparation approval, local-host information, or green CI must not substitute for those decisions.
+
+**Active next task: AA000**, followed by AA001/AA002 and AA003, then AA004/AA005 and explicit Gate AA0 review. The owner confirmed OCR is currently for local testing and Google Cloud is not in use; these are scope facts, not engine/policy/budget approval. ADR-0008 remains an inactive proposal until its dependencies and policy are approved.
+
+| AA0 task | Existing material | Missing acceptance |
+| --- | --- | --- |
+| AA000 | Spec capability map, non-goals and claim ladder | Dated product/scoring/privacy/evaluation approval of allowed claims and boundaries |
+| AA001 | Proposed score dimensions and ADR-0006 direction | Concrete score/legacy/unknown-state decisions, worked examples and owner approval |
+| AA002 | Proposed schemas/contracts and limited native evidence implementation | Reviewed, frozen versioned contracts for all named objects and approval |
+| AA003 | Proposed evaluation/privacy requirements | Corpus provenance, partitions, retention, annotation/adjudication and statistical-policy approval |
+| AA004 | ADR-0008 provider/evaluation proposal; local-test scope clarified | AA002/AA003 completion, approved local OCR contract, resource/cost/privacy protocol and sign-off |
+| AA005 | Candidate-first, PDF/DOCX-first direction | Named first occupation/domain, locale/language, input mix, formats and unsupported behavior approval |
 
 These tasks supplement, rather than retroactively upgrade, the synthetic A3 evidence.
 
@@ -699,13 +714,13 @@ These tasks supplement, rather than retroactively upgrade, the synthetic A3 evid
 - [ ] Human owners approve AA000-AA005 and change ADR-0006/0007 status only through recorded decisions.
 - [ ] Initial weights remain hypotheses until calibration; documentation creation alone does not pass this gate.
 
-### Phase AA1: Document evidence
+### Phase AA1: Document evidence [IMPLEMENTED SLICES; ACCEPTANCE BLOCKED BY AA0]
 
 #### AA010: Persist one native-PDF evidence graph
 
 **Dependencies:** AA0; **Likely files:** evidence schema/migration, extraction service, fixture, tests; **Scope:** M
 
-- [x] Persist pages, text spans, source method, confidence, and critical contact-field assertions for one native-text PDF.
+- [ ] Persist pages, text spans, source method, confidence, and critical contact-field assertions for one native-text PDF. Implementation verified; gate-dependent acceptance pending AA0.
 - **Verify:** deterministic integration test reconstructs every assertion from page/span evidence and enforces owner isolation.
 
 **Implementation (2026-10-03):** AA010 stores `native-evidence-v1` in the existing private extraction row, with Unicode code-point offsets and source references for name/email/phone candidates. All candidates are `review_required` with `uncalibrated` confidence; this is not calibrated extraction validity. Other critical fields await later structured-evidence slices. Privacy export includes the new column through its existing owner-filtered read, and deletion inherits the analysis cascade. `NATIVE_EVIDENCE_ENABLED` defaults to false until migration and full Supabase verification pass. Deploy migration `20261003100000_native_evidence_graph.sql` first, run `npm run test:aa010:db`, then opt the worker in. Disabling the flag restores the older RPC call.
@@ -720,14 +735,14 @@ These tasks supplement, rather than retroactively upgrade, the synthetic A3 evid
 
 **Dependencies:** AA010; **Likely files:** layout normalizer, Parse View, API read model, tests; **Scope:** M
 
-- [x] Normalize page coordinates, word/line blocks, columns, tables, and reading-order warnings for supported native PDFs.
+- [ ] Normalize page coordinates, word/line blocks, columns, tables, and reading-order warnings for supported native PDFs. Implementation/fixture verification recorded; gate-dependent acceptance pending AA0.
 - **Verify:** single- and multi-column fixtures meet the reading-order gate and Parse View exposes page-linked evidence accessibly.
 
 **Implemented native-text path (2026-10-04):** `extractPdfForAnalysis({ includeLayout: true, ... })` returns `native-layout-v1` pages with rendered viewport dimensions, normalized top-left approximate font-em text-run boxes, stable page/run IDs, Unicode code-point source offsets, and original PDF source order. Text is unchanged from the legacy extractor. Rotated/unsupported directions, invalid or out-of-page geometry, reversed vertical source order, and separated same-row runs produce explicit review warnings; column/table ambiguity is never silently reordered. The layout pass is sequential, keeps existing byte/page/character/time bounds, caps text items per page, and releases the PDF document. OCR replacement text never inherits native offsets.
 
 **Storage/access/UI completed:** `NATIVE_LAYOUT_ENABLED` defaults false and opts the worker into the service-only layout RPC and AA010 evidence together. The additive migration validates text, ordered source coverage, page/run identities, dimensions, boxes, warning states, and role privileges before atomic persistence. Hosted Resumide migration version `20261003183757` passes the expanded SQL verifier (six malformed-layout cases, persistence/ownership, retries, denied client roles); every fixture rolls back. The server read model filters by both analysis and authenticated owner and validates the stored JSON before returning it. Parse View exposes page-linked text runs, textual line/word offsets, keyboard-selectable source highlights, meaningful warning/unavailable states, and bounded/paginated controls. The selected overlay is aligned to the rendered PDF image and clears on page change. Owner-filtered privacy export and deletion inherit existing protections.
 
-**AA011 fixture-level acceptance completed (2026-10-04):** The versioned `native-xy-cut-v1` normalizer derives geometric lines, grounded words, column bounds/order, spanning bands, and row-major table candidates from validated persisted source runs. It preserves immutable PDF source order and abstains on unsupported geometry/direction; aligned table/column alternatives remain review-required hypotheses, not confirmed semantics. Parse View exposes the derived evidence and keyboard-linked source runs. The SHA-256-pinned real generated PDF suite meets the unchanged 98% single-column/95% supported multi-column fixture thresholds with 12/12 and 19/19 exact-position lines, full supported-fixture coverage, table-cell reconstruction and unsupported-page abstention. `npm run benchmark:native-layout` runs without `.env` and is explicitly enforced in CI. Supported scope, algorithm constants, rollback and limitations are documented in [`docs/design/NATIVE_LAYOUT_EVIDENCE.md`](../docs/design/NATIVE_LAYOUT_EVIDENCE.md).
+**AA011 fixture-level implementation verified; phase acceptance pending AA0 (corrected 2026-10-04):** The versioned `native-xy-cut-v1` normalizer derives geometric lines, grounded words, column bounds/order, spanning bands, and row-major table candidates from validated persisted source runs. It preserves immutable PDF source order and abstains on unsupported geometry/direction; aligned table/column alternatives remain review-required hypotheses, not confirmed semantics. Parse View exposes the derived evidence and keyboard-linked source runs. The SHA-256-pinned real generated PDF suite meets the unchanged 98% single-column/95% supported multi-column fixture thresholds with 12/12 and 19/19 exact-position lines, full supported-fixture coverage, table-cell reconstruction and unsupported-page abstention. `npm run benchmark:native-layout` runs without `.env` and is explicitly enforced in CI. Supported scope, algorithm constants, rollback and limitations are documented in [`docs/design/NATIVE_LAYOUT_EVIDENCE.md`](../docs/design/NATIVE_LAYOUT_EVIDENCE.md).
 
 **Release boundary:** AA011's scoped native-PDF implementation and fixture gate do not establish production calibration. The independently held-out representative release corpus and `benchmark:extraction-v2` remain AA015/AA1 work; the small synthetic corpus cannot establish those gates or confidence intervals. No OCR provider, real-data collection, scoring policy, production feature flag, or Gate A4 decision was changed.
 

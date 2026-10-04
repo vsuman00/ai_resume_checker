@@ -1,6 +1,6 @@
 # Resumide Target Architecture
 
-Status: **CANDIDATE B2C FOUNDATION APPROVED; ACCURACY-V2 ARCHITECTURAL DIRECTION APPROVED; AA010 AUTHORIZED; GATE A4 OPEN**
+Status: **CANDIDATE B2C FOUNDATION APPROVED; AA0 INCOMPLETE; AA1 IMPLEMENTATION PROVISIONAL; GATE A4 OPEN**
 Last updated: 2026-10-03
 Canonical execution documents: [`tasks/plan.md`](tasks/plan.md) and [`tasks/todo.md`](tasks/todo.md)
 Accuracy-v2 sources: [`docs/ATS_SCORING_AND_AUTHORING_SPEC.md`](docs/ATS_SCORING_AND_AUTHORING_SPEC.md), [`docs/ATS_SCORING_AND_AUTHORING_RESEARCH.md`](docs/ATS_SCORING_AND_AUTHORING_RESEARCH.md), [`tasks/accuracy-authoring-plan.md`](tasks/accuracy-authoring-plan.md), and [`CONSTRAINTS.md`](CONSTRAINTS.md)

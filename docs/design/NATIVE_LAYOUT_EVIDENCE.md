@@ -1,5 +1,7 @@
 # Native layout evidence (AA011)
 
+Status: **IMPLEMENTATION/FIXTURE VERIFIED; PHASE ACCEPTANCE PENDING AA0**. The 2026-10-04 sequencing correction in [`tasks/todo.md`](../../tasks/todo.md) supersedes the earlier claim of AA011 completion. Existing opt-in code/tests are preserved; they do not approve the missing AA0 contracts or authorize further AA1 work.
+
 ## Contract and supported scope
 
 The opt-in native-PDF path stores validated `native-layout-v1` source evidence: page dimensions, normalized top-left approximate font-em run boxes, Unicode code-point offsets, original PDF source order, and review warnings. The owner-filtered read model returns this evidence only after schema validation. Legacy analyses and OCR replacements may have no native evidence. No new database schema or privileges are required for structure inference.

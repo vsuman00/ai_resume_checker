@@ -4,6 +4,10 @@
 
 Proposed. On 2026-10-04 the workspace owner authorized preparation of the provider comparison and approval proposal, not selection, paid evaluation, disclosure of resume data, provisioning, or production enablement. AA004 and AA012 remain pending. AA002 contract freezing and AA003 corpus governance also remain prerequisites; this proposal does not approve either.
 
+## Scope clarification
+
+Scope clarification and sequencing correction: the owner confirmed on 2026-10-04 that OCR is currently for **local testing**, not a hosted production rollout. No Google Cloud account is in use. This does not approve installing/running Tesseract, budgets or contracts. This ADR remains a proposal, not the active implementation task; AA000–AA005 and Gate AA0 must be reviewed in dependency order before AA012 work. Production hosting/region choices are deferred; local native-binary, renderer and resource support is still unverified.
+
 ## Date
 
 2026-10-04
