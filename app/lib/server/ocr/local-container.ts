@@ -27,6 +27,8 @@ export type DockerCommand = (
   },
 ) => Promise<string>;
 
+export type LocalOcrEvaluationConfig = { psm: 3 | 6; maxDpi: 150 | 300 };
+
 // No shell, caller-controlled executable or environment forwarding into the container.
 const runDocker: DockerCommand = (args, options) =>
   new Promise((resolve, reject) => {
@@ -79,14 +81,33 @@ export function createLocalContainerOcrAdapter(options: {
   bytes: Uint8Array;
   imageId: string;
   command?: DockerCommand;
+  /** Explicit engineering comparison only; no production settings are changed. */
+  evaluationConfig?: LocalOcrEvaluationConfig;
 }): LocalOcrAdapter {
   if (!/^sha256:[a-f0-9]{64}$/.test(options.imageId))
     throw new LocalOcrExecutionError("engine_failure");
+  const config = options.evaluationConfig ?? { psm: 3, maxDpi: 300 };
+  if (
+    !config ||
+    Object.keys(config).length !== 2 ||
+    !(config.psm === 3 || config.psm === 6) ||
+    !(config.maxDpi === 150 || config.maxDpi === 300)
+  )
+    throw new LocalOcrExecutionError("engine_failure");
+  const psm = config.psm;
+  const maxDpi = config.maxDpi;
+  const evaluationArgs =
+    psm === 3 && maxDpi === 300 ? [] : [String(psm), String(maxDpi)];
   const bytes = options.bytes.slice();
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   const command = options.command ?? runDocker;
   return {
-    versions: LOCAL_OCR_VERSIONS,
+    versions: Object.freeze({
+      ...LOCAL_OCR_VERSIONS,
+      engine: LOCAL_OCR_VERSIONS.engine + (psm === 3 ? "" : "/psm-6"),
+      renderer:
+        LOCAL_OCR_VERSIONS.renderer + (maxDpi === 300 ? "" : "/dpi-150"),
+    }),
     async recognize(request, signal) {
       if (!SelectiveOcrRequestSchema.safeParse(request).success)
         throw new LocalOcrExecutionError("engine_failure");
@@ -178,6 +199,7 @@ export function createLocalContainerOcrAdapter(options: {
             "--tmpfs=/scratch:rw,noexec,nosuid,nodev,size=268435456,mode=700,uid=10001,gid=10001",
             options.imageId,
             request.selectedPages.map((page) => page.pageNumber).join(","),
+            ...evaluationArgs,
           ],
           { timeoutMs: budget, signal: controller.signal },
         );

@@ -101,9 +101,18 @@ const rawPageSchema = z.strictObject({
   text: z.string().max(200_000),
   words: z.array(rawWordSchema).max(10_000),
 });
+const resourceUsageSchema = z.strictObject({
+  kind: z.literal("child_process_rusage"),
+  cpuTimeMs: z.number().finite().nonnegative().max(30_000),
+  // Linux RUSAGE_CHILDREN reports the largest individual child, not container peak.
+  maxChildRssBytes: z.number().int().positive().max(1_073_741_824),
+  rendererCalls: z.number().int().positive().max(10),
+  recognitionCalls: z.number().int().positive().max(10),
+});
 const rawSchema = z.strictObject({
   durationMs: z.number().finite().nonnegative().max(30_000),
   pages: z.array(rawPageSchema).min(1).max(10),
+  resourceUsage: resourceUsageSchema.optional(),
 });
 export type LocalOcrRawResult = z.infer<typeof rawSchema>;
 export interface LocalOcrAdapter {
@@ -173,6 +182,7 @@ export const OcrEvidenceSchema = z
     coordinateSystem: z.literal("normalized_top_left"),
     durationMs: z.number().finite().nonnegative().max(30_000),
     measuredWallTimeMs: z.number().finite().nonnegative().max(30_000),
+    resourceUsage: resourceUsageSchema.optional(),
     cost: z.strictObject({
       apiFeeMicros: z.literal(0),
       compute: z.strictObject({
@@ -200,6 +210,9 @@ export const OcrEvidenceSchema = z
       value.request.allocation.maxWallTimeMs,
     );
     const valid =
+      (!value.resourceUsage ||
+        (value.resourceUsage.rendererCalls === value.pages.length &&
+          value.resourceUsage.recognitionCalls === value.pages.length)) &&
       value.pages.length === value.request.selectedPages.length &&
       value.pages.every(
         (page, index) =>
@@ -313,6 +326,9 @@ export async function runSelectiveLocalOcr(
       coordinateSystem: "normalized_top_left",
       durationMs: result.data.durationMs,
       measuredWallTimeMs,
+      ...(result.data.resourceUsage
+        ? { resourceUsage: result.data.resourceUsage }
+        : {}),
       cost: {
         apiFeeMicros: 0,
         compute: {

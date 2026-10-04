@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createLocalContainerOcrAdapter,
+  LOCAL_OCR_VERSIONS,
   type DockerCommand,
 } from "../../../app/lib/server/ocr/local-container";
 import type { SelectiveOcrRequest } from "../../../app/lib/server/ocr/selective";
@@ -55,6 +56,74 @@ function mockDocker() {
 
 describe("isolated local OCR container", () => {
   afterEach(() => vi.useRealTimers());
+
+  it("preserves original default argv and metadata for explicit 3/300 evaluation config", async () => {
+    const { command, calls } = mockDocker();
+    const adapter = createLocalContainerOcrAdapter({
+      bytes,
+      imageId,
+      command,
+      evaluationConfig: { psm: 3, maxDpi: 300 },
+    });
+    await adapter.recognize(request, new AbortController().signal);
+    expect(calls[0].slice(-2)).toEqual([imageId, "1"]);
+    expect(adapter.versions).toEqual(LOCAL_OCR_VERSIONS);
+  });
+
+  it.each([
+    [3, 150],
+    [6, 150],
+    [6, 300],
+  ] as const)(
+    "passes allowlisted PSM %i / DPI %i as fixed argv with identifiable metadata",
+    async (psm, maxDpi) => {
+      const { command, calls } = mockDocker();
+      const adapter = createLocalContainerOcrAdapter({
+        bytes,
+        imageId,
+        command,
+        evaluationConfig: { psm, maxDpi },
+      });
+      await adapter.recognize(request, new AbortController().signal);
+      expect(calls[0].slice(-4)).toEqual([
+        imageId,
+        "1",
+        String(psm),
+        String(maxDpi),
+      ]);
+      expect(adapter.versions.engine).toBe(
+        LOCAL_OCR_VERSIONS.engine + (psm === 3 ? "" : "/psm-6"),
+      );
+      expect(adapter.versions.renderer).toBe(
+        LOCAL_OCR_VERSIONS.renderer + (maxDpi === 300 ? "" : "/dpi-150"),
+      );
+      expect(adapter.versions.languageData).toBe(
+        LOCAL_OCR_VERSIONS.languageData,
+      );
+    },
+  );
+
+  it.each([
+    { psm: 7, maxDpi: 300 },
+    { psm: 3, maxDpi: 301 },
+    { psm: "3;echo", maxDpi: 300 },
+    { psm: 3, maxDpi: NaN },
+    { psm: 3, maxDpi: 300, flags: "--any" },
+  ])(
+    "rejects non-allowlisted evaluation configuration %# before invocation",
+    (evaluationConfig) => {
+      const { command } = mockDocker();
+      expect(() =>
+        createLocalContainerOcrAdapter({
+          bytes,
+          imageId,
+          command,
+          evaluationConfig: evaluationConfig as never,
+        }),
+      ).toThrow();
+      expect(command).not.toHaveBeenCalled();
+    },
+  );
 
   it("makes its root-owned entrypoint explicitly readable by the non-root runtime", () => {
     const dockerfile = readFileSync("scripts/ocr-runtime/Dockerfile", "utf8");

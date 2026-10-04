@@ -12,8 +12,10 @@ import sys
 import tempfile
 import time
 import signal
+import resource
 
 started = time.monotonic()
+process_counts = {"rendererCalls": 0, "recognitionCalls": 0}
 
 
 def execute(argv):
@@ -23,6 +25,10 @@ def execute(argv):
     with tempfile.TemporaryFile(dir="/scratch") as output:
         process = subprocess.Popen(argv, stdout=output, stderr=subprocess.DEVNULL, start_new_session=True,
                                    env={"PATH": "/usr/bin:/bin", "LC_ALL": "C.UTF-8", "OMP_THREAD_LIMIT": "2", "TMPDIR": "/scratch"})
+        if argv[0] == "pdftoppm":
+            process_counts["rendererCalls"] += 1
+        elif argv[0] == "tesseract":
+            process_counts["recognitionCalls"] += 1
         try:
             while process.poll() is None:
                 if time.monotonic() - started >= 10 or os.fstat(output.fileno()).st_size > 4 * 1024 * 1024:
@@ -39,8 +45,13 @@ def execute(argv):
 
 
 def main():
-    if len(sys.argv) != 2 or not re.fullmatch(r"[1-9][0-9]*(,[1-9][0-9]*){0,9}", sys.argv[1]):
+    if len(sys.argv) not in [2, 4] or not re.fullmatch(r"[1-9][0-9]*(,[1-9][0-9]*){0,9}", sys.argv[1]):
         raise ValueError("pages")
+    psm, max_dpi = "3", 300
+    if len(sys.argv) == 4:
+        if sys.argv[2] not in ["3", "6"] or sys.argv[3] not in ["150", "300"]:
+            raise ValueError("config")
+        psm, max_dpi = sys.argv[2], int(sys.argv[3])
     selected = [int(number) for number in sys.argv[1].split(",")]
     if len(set(selected)) != len(selected) or max(selected) > 20:
         raise ValueError("pages")
@@ -63,7 +74,7 @@ def main():
         rotation = int(rotation_match.group(1)) % 360
         if not all(math.isfinite(value) and value > 0 for value in [width_points, height_points]) or rotation not in [0, 90, 180, 270]:
             raise ValueError("dimensions")
-        dpi = min(300, 3160 * 72 / max(width_points, height_points))
+        dpi = min(max_dpi, 3160 * 72 / max(width_points, height_points))
         execute(["pdftoppm", "-f", str(page_number), "-l", str(page_number), "-singlefile", "-r", str(dpi), "-png", "/scratch/input.pdf", "/scratch/page"])
         with open("/scratch/page.png", "rb") as raster:
             image = raster.read(40 * 1024 * 1024 + 1)
@@ -74,7 +85,7 @@ def main():
         total_pixels += pixels
         if not width or not height or pixels > 10_000_000 or total_pixels > 100_000_000:
             raise ValueError("pixels")
-        tsv = execute(["tesseract", "/scratch/page.png", "stdout", "-l", "eng", "--psm", "3", "tsv"]).decode("utf-8")
+        tsv = execute(["tesseract", "/scratch/page.png", "stdout", "-l", "eng", "--psm", psm, "tsv"]).decode("utf-8")
         words = []
         text = ""
         previous_line = None
@@ -97,7 +108,10 @@ def main():
                        "widthPixels": width, "heightPixels": height, "rotation": rotation, "text": text, "words": words})
         os.unlink("/scratch/page.png")
     os.unlink("/scratch/input.pdf")
-    encoded = json.dumps({"durationMs": round((time.monotonic() - started) * 1000), "pages": output}).encode("utf-8")
+    usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+    resource_usage = {"kind": "child_process_rusage", "cpuTimeMs": (usage.ru_utime + usage.ru_stime) * 1000,
+                      "maxChildRssBytes": usage.ru_maxrss * 1024, **process_counts}
+    encoded = json.dumps({"durationMs": round((time.monotonic() - started) * 1000), "pages": output, "resourceUsage": resource_usage}).encode("utf-8")
     if len(encoded) > 4 * 1024 * 1024:
         raise ValueError("output_limit")
     sys.stdout.buffer.write(encoded)

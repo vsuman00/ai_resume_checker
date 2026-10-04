@@ -78,6 +78,46 @@ function adapter(result = raw()) {
 }
 
 describe("selective local OCR contract", () => {
+  const resourceUsage = {
+    kind: "child_process_rusage" as const,
+    cpuTimeMs: 14,
+    maxChildRssBytes: 24 * 1024 * 1024,
+    rendererCalls: 1,
+    recognitionCalls: 1,
+  };
+  it("preserves qualified observed child resource usage without inventing container peak memory", async () => {
+    const result = await runSelectiveLocalOcr(
+      request(),
+      adapter({ ...raw(), resourceUsage }),
+    );
+    expect(result.status).toBe("review_required");
+    expect(result).toHaveProperty("resourceUsage", resourceUsage);
+  });
+  it.each([
+    { cpuTimeMs: NaN },
+    { cpuTimeMs: -1 },
+    { maxChildRssBytes: 0 },
+    { maxChildRssBytes: 1073741825 },
+    { rendererCalls: 0 },
+    { recognitionCalls: 2 },
+    { kind: "container_peak" },
+    { arbitrary: true },
+  ])(
+    "rejects malformed or contradictory observed resource usage %j",
+    async (change) => {
+      const result = await runSelectiveLocalOcr(
+        request(),
+        adapter({
+          ...raw(),
+          resourceUsage: { ...resourceUsage, ...change },
+        } as unknown as LocalOcrRawResult),
+      );
+      expect(result).toMatchObject({
+        status: "failed",
+        code: "invalid_output",
+      });
+    },
+  );
   it("preserves mixed native pages and original OCR identity with uncalibrated word evidence", async () => {
     const input = request();
     const before = structuredClone(input);
