@@ -1,6 +1,6 @@
 # AA012 local OCR diagnostic report
 
-Status: **PARTIAL — runtime diagnostics verified; transcription screening failed; AA012/AA1 acceptance open.**
+Status: **PARTIAL — normal-font held-out transcription passes the scoped engineering screen; original block-font transcription fails; AA012/AA1 acceptance open.**
 Evaluation: 2026-10-04, synthetic-only English / India-focused software-engineering content. Governing protocol: [ADR-0008](../decisions/0008-selective-ocr-evaluation.md), [ADR-0009](../decisions/0009-aa0-truth-contract-and-evaluation-design.md), scoped AI-label permission [ADR-0010](../decisions/0010-ai-assisted-synthetic-annotation.md). No production integration, real data, managed OCR, external fees or threshold changes.
 
 ## Reproduction and receipt
@@ -143,3 +143,59 @@ development decision and new untouched sources; this receipt cannot authorize
 tuning on these six outputs. Their authored family hashes were already pinned
 before all OCR comparisons. Calibration-family recognition remains separate from
 confidence calibration and representative validation.
+
+### Frozen held-out results
+
+At source revision `f78a53ebbeeb6a7e6cf3e33b485dd235cfd6bb87`, the pre-recorded
+receipt was supplied unchanged. Actual locked recognition completed at
+`2026-10-04T15:35:57.959Z`; `--require-quality` exited **0**. No output-directed
+tuning or rerendering was performed on these held-out families.
+
+| Held-out segment | Documents / authored families | OCR CER / 95% family-bootstrap interval | Exact-position lines / page coverage | Critical source values | Wall p50 / p95 |
+| ---------------- | ----------------------------: | --------------------------------------- | ------------------------------------ | ---------------------: | -------------- |
+| Clean            |                         2 / 2 | 0% / [0, 0]                             | 100% / 100%                          |                  16/16 | 551 / 598 ms   |
+| Challenging      |                         2 / 2 | 0% / [0, 0]                             | 100% / 100%                          |                  16/16 | 515 / 517 ms   |
+| Mixed OCR-only   |                         2 / 2 | 0% / [0, 0]                             | 100% / 100%                          |                  16/16 | 726 / 733 ms   |
+
+Every held-out document returned `review_required`, scoring-ineligible evidence;
+zero failures/abstentions. Original mixed pages 1/3 were recognized and native
+page 2 remained immutable. Geometry/output contract and exact-owned cleanup pass.
+Eight renderer and eight recognition starts were observed, child CPU 2,528.877 ms,
+maximum individual-child RSS 57,147,392 bytes. All six successful observations
+have resource receipts; whole-container peak is still unmeasured. The tiny
+two-family zero-error interval is descriptive, not a population guarantee.
+
+The three preassigned calibration-family documents were then executed with the
+same settings, without fitting a confidence model. Each has zero character errors,
+100% line/page agreement and all eight critical source values preserved. Its
+per-segment intervals remain **null** and `screeningGate=not_passed` because there
+is only one source family. This is recognition verification, not confidence
+calibration or an accepted statistical gate. Receipt:
+`5c68bcd1c62f63a3af4b1d9f482aa84127c07c456a5447d3c3b49a11ad01b098`;
+manifest: `aba65fc337d25b6c1ec41e7379e9d336c4c9d219ae07f76c3b051cb5d666ed7a`;
+completion: `2026-10-04T15:36:51.954Z`. Neither raw images nor recovered text were
+persisted. Hypothetical raw expiry is 30 days after each recorded completion.
+
+Reproduce the frozen held-out observation on the matching platform/image:
+
+```sh
+npm run test:ocr:pilot -- sha256:6fa3e4a4c000c5f70e3689bc51166eaa6fce9c81648da97f01653baafc397b2f --print-pilot --partition=locked --psm=3 --dpi=150 --lock-receipt=d753f080ab6a23291bf00c6557c81e533b3a89f4da8cf20327a99f0cc1bc4a7a --require-quality
+```
+
+**Retained failure:** original block-glyph diagnostics at the selected settings
+still exit **1**: clean CER 19.2982%, challenging 70.1754% (two of six abstentions),
+mixed OCR-only 8.3333%. Their one-family intervals remain null. Receipt:
+`b689e946e627c1bf3e781d4c52742f91ae9425b12c0c301a4378f5763b5b523a`;
+original manifest/labels are unchanged. No normal-font result relabels those
+failures as successes or removes them from the diagnostic record.
+
+**Completion boundary:** the normal-font, single-column local transcription
+repair and its frozen held-out engineering check are verified. Full AA012 is not
+accepted: structured-field precision/recall, all specified adverse classes
+(including actual encrypted/oversized-raster inputs), whole-container peak/cold
+start measurements and final protocol/acceptance review are still outstanding.
+The calibration partition is too small for statistical acceptance. Independent
+human/representative validation, calibrated confidence, AA013 reconciliation,
+AA014 correction workflow and AA015 release evaluation remain separate open
+requirements. Original block-font scans remain unsupported/review-required.
+No production enablement or authoritative score is authorized by this report.
