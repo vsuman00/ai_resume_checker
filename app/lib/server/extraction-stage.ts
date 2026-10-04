@@ -80,22 +80,41 @@ export async function extractPdfForAnalysis(
 
   let timeout: ReturnType<typeof setTimeout> | undefined;
   const startedAt = performance.now();
+  const controller = new AbortController();
   try {
-    const extracted = await Promise.race([
-      extractor(args.bytes, {
-        maxPages: args.maxPages,
-        maxCharacters: args.maxCharacters,
-        includeLayout: args.includeLayout,
-      }),
-      new Promise<never>((_, reject) => {
-        timeout = setTimeout(
-          () => reject(new ExtractionStageFailure("TIMEOUT")),
-          args.timeoutMs,
+    return await Promise.race([
+      (async () => {
+        const extracted = await extractor(args.bytes, {
+          maxPages: args.maxPages,
+          maxCharacters: args.maxCharacters,
+          includeLayout: args.includeLayout,
+        });
+        const remainingMs = args.timeoutMs - (performance.now() - startedAt);
+        if (controller.signal.aborted || remainingMs <= 0) {
+          throw new ExtractionStageFailure("TIMEOUT");
+        }
+        return resolveExtraction(
+          extracted,
+          args,
+          {
+            ...ocrRuntime,
+            policy: {
+              ...ocrRuntime.policy,
+              timeoutMs: Math.min(ocrRuntime.policy.timeoutMs, remainingMs),
+            },
+          },
+          startedAt,
+          controller.signal,
         );
+      })(),
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          controller.abort();
+          reject(new ExtractionStageFailure("TIMEOUT"));
+        }, args.timeoutMs);
         timeout.unref?.();
       }),
     ]);
-    return resolveExtraction(extracted, args, ocrRuntime, startedAt);
   } finally {
     if (timeout) clearTimeout(timeout);
   }
@@ -106,6 +125,7 @@ async function resolveExtraction(
   args: { bytes: Uint8Array; maxCharacters: number },
   ocrRuntime: OcrRuntime,
   startedAt: number,
+  signal: AbortSignal,
 ) {
   const profile = detectPdfTextProfile(extracted);
   let text = extracted.text;
@@ -115,7 +135,7 @@ async function resolveExtraction(
 
   if (profile.documentType !== "text") {
     const ocr = await resolveOcr(
-      { bytes: args.bytes, pageCount: extracted.totalPages },
+      { bytes: args.bytes, pageCount: extracted.totalPages, signal },
       ocrRuntime,
     );
     if (ocr.status === "needs_ocr") {

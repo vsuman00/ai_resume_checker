@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   extractPdfForAnalysis,
   OcrRequiredError,
@@ -45,6 +45,95 @@ const unsupportedRuntime = {
 } satisfies OcrRuntime;
 
 describe("OCR extraction router", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it.each([0, 60])(
+    "keeps the total deadline active during OCR after %i ms of native work",
+    async (nativeDuration) => {
+      vi.useFakeTimers({
+        toFake: ["setTimeout", "clearTimeout", "performance"],
+      });
+      let recognitionSignal: AbortSignal | undefined;
+      const runtime: OcrRuntime = {
+        ...unsupportedRuntime,
+        policy: defineOcrPolicy({
+          ...unsupportedRuntime.policy,
+          approval: "approved",
+          enabled: true,
+          allowThirdPartyProcessing: true,
+          maxCostMicros: 10,
+          timeoutMs: 1_000,
+        }),
+        privacy: {
+          ...unsupportedRuntime.privacy,
+          consentGranted: true,
+          thirdPartyProcessingAllowed: true,
+        },
+        adapter: {
+          ...unsupportedRuntime.adapter,
+          capabilities: {
+            processingRegions: ["ap-south-1"],
+            retentionDays: 0,
+            maxCostMicrosPerPage: 5,
+          },
+          async recognize(_, signal) {
+            recognitionSignal = signal;
+            return new Promise<never>(() => undefined);
+          },
+        },
+      };
+      let settled = false;
+      const outcome = extractPdfForAnalysis(
+        limits,
+        async () => {
+          await new Promise((resolve) => setTimeout(resolve, nativeDuration));
+          return { totalPages: 1, text: "", pageTexts: [""] };
+        },
+        runtime,
+      ).then(
+        () => {
+          settled = true;
+          return null;
+        },
+        (error: unknown) => {
+          settled = true;
+          return error;
+        },
+      );
+
+      await vi.advanceTimersByTimeAsync(99);
+      expect(settled).toBe(false);
+      expect(recognitionSignal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toBe(true);
+      expect(recognitionSignal?.aborted).toBe(true);
+      expect(await outcome).toMatchObject({ code: "TIMEOUT" });
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it("does not start OCR after native extraction exhausts the deadline", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "performance"] });
+    const recognize = vi.fn();
+    const runtime = {
+      ...unsupportedRuntime,
+      adapter: { ...unsupportedRuntime.adapter, recognize },
+    };
+    const outcome = extractPdfForAnalysis(
+      limits,
+      async () => {
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        return { totalPages: 1, text: "", pageTexts: [""] };
+      },
+      runtime,
+    ).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(await outcome).toMatchObject({ code: "TIMEOUT" });
+    await vi.advanceTimersByTimeAsync(20);
+    expect(recognize).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("persists text PDFs without calling OCR", async () => {
     const result = await extractPdfForAnalysis(
       limits,

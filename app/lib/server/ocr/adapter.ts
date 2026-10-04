@@ -131,7 +131,11 @@ export function defineOcrPolicy(policy: OcrPolicy): Readonly<OcrPolicy> {
   if (!Number.isInteger(policy.maxCostMicros) || policy.maxCostMicros < 0) {
     throw new Error("OCR cost limit must be a non-negative whole number.");
   }
-  if (policy.minimumConfidence < 0 || policy.minimumConfidence > 1) {
+  if (
+    !Number.isFinite(policy.minimumConfidence) ||
+    policy.minimumConfidence < 0 ||
+    policy.minimumConfidence > 1
+  ) {
     throw new Error("OCR minimum confidence must be between zero and one.");
   }
   return Object.freeze({ ...policy });
@@ -162,6 +166,9 @@ function preflightFailure(
   const maximumProjectedCost =
     adapter.capabilities.maxCostMicrosPerPage * pageCount;
   if (
+    !Number.isSafeInteger(adapter.capabilities.maxCostMicrosPerPage) ||
+    adapter.capabilities.maxCostMicrosPerPage < 0 ||
+    !Number.isSafeInteger(maximumProjectedCost) ||
     policy.maxCostMicros <= 0 ||
     maximumProjectedCost > policy.maxCostMicros
   ) {
@@ -171,14 +178,19 @@ function preflightFailure(
 }
 
 export async function resolveOcr(
-  args: { bytes: Uint8Array; pageCount: number },
+  args: { bytes: Uint8Array; pageCount: number; signal?: AbortSignal },
   runtime: OcrRuntime = DEFAULT_OCR_RUNTIME,
 ): Promise<OcrResolution> {
+  if (!Number.isSafeInteger(args.pageCount) || args.pageCount <= 0) {
+    return { status: "needs_ocr", reason: "unsupported" };
+  }
+  if (args.signal?.aborted) return { status: "needs_ocr", reason: "timeout" };
   const blockedBy = preflightFailure(runtime, args.pageCount);
   if (blockedBy) return { status: "needs_ocr", reason: blockedBy };
 
   const controller = new AbortController();
   let timeout: ReturnType<typeof setTimeout> | undefined;
+  let abortFromDeadline: (() => void) | undefined;
   try {
     const response = await Promise.race([
       runtime.adapter.recognize(
@@ -192,6 +204,13 @@ export async function resolveOcr(
         controller.signal,
       ),
       new Promise<never>((_, reject) => {
+        abortFromDeadline = () => {
+          controller.abort();
+          reject(new Error("OCR_TIMEOUT"));
+        };
+        args.signal?.addEventListener("abort", abortFromDeadline, {
+          once: true,
+        });
         timeout = setTimeout(() => {
           controller.abort();
           reject(new Error("OCR_TIMEOUT"));
@@ -204,13 +223,20 @@ export async function resolveOcr(
       ? response.confidence
       : 0;
     if (
+      !Number.isFinite(response.confidence) ||
+      response.confidence < 0 ||
+      response.confidence > 1 ||
       response.pageTexts.length !== args.pageCount ||
       response.pageTexts.some((text) => text.trim().length === 0) ||
       minimumPageConfidence < runtime.policy.minimumConfidence
     ) {
       return { status: "needs_ocr", reason: "low_confidence" };
     }
-    if (response.costMicros > runtime.policy.maxCostMicros) {
+    if (
+      !Number.isSafeInteger(response.costMicros) ||
+      response.costMicros < 0 ||
+      response.costMicros > runtime.policy.maxCostMicros
+    ) {
       return { status: "needs_ocr", reason: "cost_policy" };
     }
 
@@ -232,5 +258,7 @@ export async function resolveOcr(
     return { status: "needs_ocr", reason: "outage" };
   } finally {
     if (timeout) clearTimeout(timeout);
+    if (abortFromDeadline)
+      args.signal?.removeEventListener("abort", abortFromDeadline);
   }
 }

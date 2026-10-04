@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_OCR_RUNTIME,
   OcrAdapterFailure,
@@ -44,6 +44,125 @@ function permittedRuntime(
 }
 
 describe("OCR policy boundary", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("does not invoke an adapter after its enclosing deadline is already aborted", async () => {
+    const runtime = permittedRuntime({
+      pageTexts: ["OCR text"],
+      confidence: 0.9,
+      costMicros: 5,
+    });
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      resolveOcr({ bytes, pageCount: 1, signal: controller.signal }, runtime),
+    ).resolves.toEqual({ status: "needs_ocr", reason: "timeout" });
+    expect(runtime.adapter.recognize).not.toHaveBeenCalled();
+  });
+
+  it("aborts recognition and clears timers when an enclosing deadline expires", async () => {
+    vi.useFakeTimers();
+    const runtime = permittedRuntime({
+      pageTexts: ["OCR text"],
+      confidence: 0.9,
+      costMicros: 5,
+    });
+    let recognitionSignal: AbortSignal | undefined;
+    runtime.adapter.recognize = async (_, signal) => {
+      recognitionSignal = signal;
+      return new Promise<never>(() => undefined);
+    };
+    const controller = new AbortController();
+    const outcome = resolveOcr(
+      { bytes, pageCount: 1, signal: controller.signal },
+      runtime,
+    );
+    controller.abort();
+    await expect(outcome).resolves.toEqual({
+      status: "needs_ocr",
+      reason: "timeout",
+    });
+    expect(recognitionSignal?.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([NaN, Infinity, -Infinity, -0.1, 1.1])(
+    "rejects invalid confidence %s without accepting OCR text",
+    async (confidence) => {
+      const runtime = permittedRuntime({
+        pageTexts: ["OCR text"],
+        confidence,
+        costMicros: 5,
+      });
+      await expect(
+        resolveOcr({ bytes, pageCount: 1 }, runtime),
+      ).resolves.toEqual({ status: "needs_ocr", reason: "low_confidence" });
+    },
+  );
+
+  it.each([NaN, Infinity, -Infinity, -1, 0.5])(
+    "rejects invalid charged cost %s without accepting OCR text",
+    async (costMicros) => {
+      const runtime = permittedRuntime({
+        pageTexts: ["OCR text"],
+        confidence: 0.9,
+        costMicros,
+      });
+      await expect(
+        resolveOcr({ bytes, pageCount: 1 }, runtime),
+      ).resolves.toEqual({ status: "needs_ocr", reason: "cost_policy" });
+    },
+  );
+
+  it.each([NaN, Infinity, -Infinity, -1, 0.5])(
+    "rejects invalid projected page cost %s before invoking an adapter",
+    async (maxCostMicrosPerPage) => {
+      const runtime = permittedRuntime({
+        pageTexts: ["OCR text"],
+        confidence: 0.9,
+        costMicros: 5,
+      });
+      runtime.adapter = {
+        ...runtime.adapter,
+        capabilities: { ...runtime.adapter.capabilities, maxCostMicrosPerPage },
+      };
+      await expect(
+        resolveOcr({ bytes, pageCount: 1 }, runtime),
+      ).resolves.toEqual({ status: "needs_ocr", reason: "cost_policy" });
+      expect(runtime.adapter.recognize).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([NaN, Infinity, -1, 0, 1.5])(
+    "rejects invalid page count %s before invoking an adapter",
+    async (pageCount) => {
+      const runtime = permittedRuntime({
+        pageTexts: ["OCR text"],
+        confidence: 0.9,
+        costMicros: 5,
+      });
+      await expect(resolveOcr({ bytes, pageCount }, runtime)).resolves.toEqual({
+        status: "needs_ocr",
+        reason: "unsupported",
+      });
+      expect(runtime.adapter.recognize).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([NaN, Infinity, -Infinity])(
+    "rejects non-finite confidence policy %s",
+    (minimumConfidence) => {
+      const runtime = permittedRuntime({
+        pageTexts: ["OCR text"],
+        confidence: 0.9,
+        costMicros: 5,
+      });
+      expect(() =>
+        defineOcrPolicy({ ...runtime.policy, minimumConfidence }),
+      ).toThrow("OCR minimum confidence");
+    },
+  );
+
   it("does not invoke an OCR provider until one is approved", async () => {
     await expect(
       resolveOcr({ bytes, pageCount: 1 }, DEFAULT_OCR_RUNTIME),

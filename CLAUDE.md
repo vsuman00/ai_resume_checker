@@ -20,7 +20,7 @@ Preserve the status vocabulary used by the project: `IMPLEMENTED`, `VERIFIED`, `
 
 ### Accuracy-v2 sequencing guard
 
-Gate AA0 passed on 2026-10-04 through explicit workspace-owner approval of ADR-0009 candidate 1 at `e629a2882b3cc14a63771ae400f4f67a7e4f3f62`. AA000–AA005 logical design contracts are frozen. Next: review provisional AA010/AA011 against those contracts and rerun their acceptance checks before new dependent implementation. AA1, calibration and production Gate A4 remain open. Local OCR execution requires the approved synthetic-only protocol and host/resource/isolation checks; real-data access and external providers remain unauthorized. Read the sequencing correction and later approval in `tasks/todo.md`; never infer other gate sign-off from “continue” or green CI. Preserve existing implementation/migrations; do not reset history or roll back schema without a scoped recovery decision.
+Gate AA0 passed on 2026-10-04 through explicit workspace-owner approval of ADR-0009 candidate 1 at `e629a2882b3cc14a63771ae400f4f67a7e4f3f62`. AA000–AA005 logical design contracts are frozen. AA010/AA011 scoped native conformity is accepted; next is AA012 selective local OCR after its host/resource/isolation/cost prerequisites. ADR-0010 permits disclosed AI-assisted synthetic engineering labels, not independent human or representative validation. AA1, calibration and production Gate A4 remain open. Real-data access and external providers remain unauthorized. Read the sequencing correction and later acceptance in `tasks/todo.md`; never infer other gate sign-off from “continue” or green CI. Preserve existing implementation/migrations; do not reset history or roll back schema without a scoped recovery decision.
 
 ## Stack and layout
 

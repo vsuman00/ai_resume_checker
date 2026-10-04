@@ -1,10 +1,27 @@
 # Native layout evidence (AA011)
 
-Status: **IMPLEMENTATION/FIXTURE VERIFIED; PHASE ACCEPTANCE PENDING CONFORMITY REVIEW**. The 2026-10-04 sequencing correction in [`tasks/todo.md`](../../tasks/todo.md) supersedes the earlier claim of AA011 completion. Gate AA0 subsequently passed through explicit [ADR-0009](../decisions/0009-aa0-truth-contract-and-evaluation-design.md) approval. Existing opt-in code/tests are preserved; conformity with the frozen contracts and AA1 release evidence remain separate acceptance requirements.
+Status: **AA010/AA011 NATIVE SCOPE ACCEPTED; AA1 RELEASE GATE OPEN**. The earlier sequencing error remains recorded in [`tasks/todo.md`](../../tasks/todo.md). Gate AA0 subsequently passed through explicit [ADR-0009](../decisions/0009-aa0-truth-contract-and-evaluation-design.md) approval; the 2026-10-04 conformity review below accepts the retained native formats for their scoped tasks, not representative accuracy or full AA1.
 
 Post-AA0 review (2026-10-04): native source invariants and fixture/browser behavior were reverified, and native contact evidence now has a strict worker-side runtime validator. The persisted formats remain `native-evidence-v1` / `native-layout-v1`, with uncalibrated states and approximate geometry; they are not silently upgraded to the v2 envelope. Full local regression passes with 248 tests and 45 browser tests. OCR runtime isolation, independent corpus annotation and representative extraction validity remain pending; see the AA1 progress/prerequisite record in the todo. No schema, authoritative score, production flag or native source text changed.
 
 ## Contract and supported scope
+
+### Post-AA0 conformity record (2026-10-04)
+
+ADR-0009 permits retaining validated native v1 formats. The following contextual bindings satisfy that native scope; duplicating them into a runtime v2 envelope is not an additional AA010/AA011 gate.
+
+| Concern | Implemented binding and verification | Qualification |
+| --- | --- | --- |
+| Owner, analysis and source | Service RPC derives owner/organization from locked analysis; analysis links immutable `resume_versions`; SQL verifier tests atomic writes, retries and denied client roles | Graph-local page IDs are not globally unique record IDs |
+| Input/text hashes and time | Upload SHA-256 in source version, text SHA-256 beside extraction, server-created timestamps | Download is not rehashed; SQL checks hash shape, not independent cryptographic equality |
+| Source provenance | Strict `native-evidence-v1`, `unpdf-v1`, `native-layout-v1`; grounded Unicode spans and explicit uncalibrated contact states | Contact-only scope; other critical fields remain AA1 work |
+| Geometry/order | Qualified approximate font-em boxes, immutable source order, `native-xy-cut-v1` hypotheses; pinned real synthetic PDFs and accessible Parse View | No precise word polygons, universal ordering or calibrated probabilities |
+| Private access | Private bucket; owner-filtered analysis/layout reads; validated JSON; cross-owner unit/browser tests | No new public raw-evidence access |
+| Export/deletion/retention | Existing owner-filtered extraction export; analysis deletion cascade; parent resume retention sweep | Inherited lifecycle, not a per-object frozen retention-policy ID; production scheduling remains A4 |
+
+Implementation references: `app/lib/server/storage.ts`, `analysis-ingestion.ts`, `native-evidence-schema.ts`, `layout-read-model.ts`, `privacy-worker.ts`, `retention.ts`; extraction/page/evidence/layout migrations; `scripts/verify-native-evidence.sql`. Fresh native hardening revision `db9c1abce96c1ab218a91f5080f0d7ea82336a22` passed all four [GitHub CI jobs](https://github.com/vsuman00/ai_resume_checker/actions/runs/37186856623), including full migrated Supabase SQL checks, with local 248 tests and 45 browser tests. This is scoped conformity/regression evidence, not representative extraction accuracy.
+
+The experimental pure `native-evidence-v2.ts` adapter separately projects immutable v1 sources into a strict, scoring-ineligible envelope. It performs no authentication, download/hash verification, persistence or pipeline integration; callers must supply authorized server context. Unknown coverage/calibration/line geometry stay null with reasons. This helper does not fix AA013: the current worker scoring path still requires an explicit unsafe-evidence no-score gate.
 
 The opt-in native-PDF path stores validated `native-layout-v1` source evidence: page dimensions, normalized top-left approximate font-em run boxes, Unicode code-point offsets, original PDF source order, and review warnings. The owner-filtered read model returns this evidence only after schema validation. Legacy analyses and OCR replacements may have no native evidence. No new database schema or privileges are required for structure inference.
 
